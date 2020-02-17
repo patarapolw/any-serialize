@@ -16,9 +16,31 @@ See [/tests](/tests).
 Note that `Date` is already serialable via this method by default; however, `RegExp`, `Function` and `Class` might not be.
 
 ```js
-import { Serialize, Item } from '../src'
+import { Serialize, Item } from 'any-serialize'
 
-const ser = new Serialize([Date, Item(RegExp, {
+class CustomClass {
+  static __name__ = 'custom_name'
+
+  static fromJSON (arg: {a: number, b: number}) {
+    const { a, b } = arg
+    return new CustomClass(a, b)
+  }
+
+  a: number
+  b: number
+
+  constructor (a: number, b: number) {
+    this.a = a
+    this.b = b
+  }
+
+  toJSON () {
+    const { a, b } = this
+    return { a, b }
+  }
+}
+
+const ser = new Serialize([Date, CustomClass, Item(RegExp, {
   toJSON () {
     const { source, flags } = this as RegExp
     return { source, flags }
@@ -30,13 +52,16 @@ const ser = new Serialize([Date, Item(RegExp, {
 
 const r = ser.stringify({
   a: new Date(),
-  r: /^hello$/
+  r: /^hello$/,
+  c: new CustomClass(1, 3)
 })
 
 console.log(r)
-// {"a":{"$Date":"2020-02-17T13:23:10.726Z"},"r":{"$RegExp":{"source":"^hello$","flags":""}}}
+// {"a":{"$Date":"2020-02-17T13:37:42.279Z"},"r":{"$RegExp":{"source":"^hello$","flags":""}},"c":{"$custom_name":{"a":1,"b":3}}}
 console.log(ser.parse(r))
-// { a: 2020-02-17T13:23:10.726Z, r: /^hello$/ }
+// { a: 2020-02-17T13:37:42.279Z,
+//   r: /^hello$/,
+//   c: CustomClass { a: 1, b: 3 } }
 ```
 
 To ensure collision prevention, you might set `$id` with `nanoid` or `uuid`.
@@ -44,14 +69,13 @@ To ensure collision prevention, you might set `$id` with `nanoid` or `uuid`.
 And, on perhaps, client-side, you deserialize with the same `$id`.
 
 ```ts
-// Use the cached ID from the previous step.
 const ser = new Serialize([Date, Item(...)], { $id })
 ```
 
 If you to create a hash or ensure key order, you might use [json-stable-stringify](https://github.com/substack/json-stable-stringify)
 
 ```ts
-const ser = new Serialize([Date, RegExpSerialiable], {
+const ser = new Serialize([Date, Item(...)], {
   stringify(obj, replacer) {
     return stringify(obj, { replacer })
   }
