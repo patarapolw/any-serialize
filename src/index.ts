@@ -8,7 +8,7 @@ export class Serialize {
      */
     registrations: any[],
     private options: {
-      id: string,
+      $id?: string,
       stringify: (
         obj: any,
         replacer: (k: string, v: any, _this?: any) => any
@@ -18,13 +18,12 @@ export class Serialize {
         reviver: (k: string, v: any) => any
       ) => any
     } = {
-      id: `$$${Math.random().toString(36).substr(2)}`,
       stringify: JSON.stringify,
       parse: JSON.parse
     }
   ) {
     this.registrar = registrations.reduce((prev, K) => {
-      K.__fromRepr__ = K.__fromRepr__ || K.fromJSON || ((arg: string) => new K(arg))
+      K.fromJSON = K.fromJSON || ((arg: string) => new K(arg))
 
       return {
         ...prev,
@@ -35,8 +34,16 @@ export class Serialize {
     }, {})
   }
 
+  get $id () {
+    return this.options.$id
+  }
+
+  set $id (id: string | undefined) {
+    this.options.$id = id
+  }
+
   stringify (obj: any) {
-    const id = this.options.id
+    const $id = this.options.$id
     const regis = this.registrar
 
     return this.options.stringify(obj, function (k, v, _this) {
@@ -44,10 +51,13 @@ export class Serialize {
       _this = this || _this
       const v0 = _this ? _this[k] : v
       if (typeof v0 === 'object') {
-        v0.__repr__ = v0.toJSON || v0.__repr__ || v0.toString
+        v0.toJSON = v0.toJSON || v0.toString
         for (const [name, r] of Object.entries(regis)) {
           if (v0 instanceof r) {
-            return [id, name, v0.__repr__()]
+            return {
+              $id,
+              [`$${name}`]: v0.toJSON()
+            }
           }
         }
       }
@@ -58,11 +68,40 @@ export class Serialize {
 
   parse (repr: string) {
     return this.options.parse(repr, (_, v) => {
-      if (Array.isArray(v) && v.length === 3 && v[0] === this.options.id) {
-        console.log(v[2])
-        return this.registrar[v[1]].__fromRepr__(v[2])
+      if (v && typeof v === 'object' && v.$id === this.options.$id) {
+        for (const [k0, v0] of Object.entries(this.registrar)) {
+          if (v[`$${k0}`]) {
+            return v0.fromJSON(v[`$${k0}`])
+          }
+        }
       }
       return v
     })
   }
+}
+
+export const Item = (
+  K: any,
+  options: {
+    name?: string,
+    toJSON?: (_this: any) => any,
+    fromJSON?: (_this: any) => any
+  }
+) => {
+  const { name, toJSON, fromJSON } = options
+
+  if (name) {
+    Object.assign(K, { __name__: name })
+  }
+
+  if (fromJSON) {
+    Object.assign(K, { fromJSON })
+  }
+
+  if (toJSON) {
+    toJSON.bind(K)
+    Object.assign(K.prototype, { toJSON })
+  }
+
+  return K
 }
