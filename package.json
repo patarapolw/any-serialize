@@ -1,6 +1,6 @@
 {
   "name": "any-serialize",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "author": "Pacharapol Withayasakpunt <patarapolw@gmail.com> (https://polvcode.dev)",
