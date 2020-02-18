@@ -6,7 +6,8 @@
   "author": "Pacharapol Withayasakpunt <patarapolw@gmail.com> (https://polvcode.dev)",
   "license": "MIT",
   "scripts": {
-    "prepack": "tsc -P src/tsconfig.json"
+    "prepack": "tsc -P src/tsconfig.json",
+    "test": "ts-mocha tests/**/*.spec.ts"
   },
   "devDependencies": {
     "@types/mocha": "^5.2.7",

@@ -22,24 +22,22 @@ export class Serialize {
       parse: JSON.parse
     }
   ) {
-    this.registrar = registrations.reduce((prev, K) => {
-      K.fromJSON = K.fromJSON || ((arg: string) => new K(arg))
+    this.registrar = registrations.reduce((prev, K: any) => {
+      // @ts-ignore
+      K.fromJSON = K.fromJSON || ((arg: string) => isClass(K) ? new K(arg) : undefined)
+      const key = K.__name__ || (isClass(K)
+        ? K.prototype.constructor.name
+        : K.__id__)
 
       return {
         ...prev,
-        [K.__name__ || (() => {
-          return K.toString().replace(/^function /, '').split('()')[0]
-        })()]: K
+        [key]: K
       }
     }, {})
   }
 
   get $id () {
     return this.options.$id
-  }
-
-  set $id (id: string | undefined) {
-    this.options.$id = id
   }
 
   stringify (obj: any) {
@@ -51,13 +49,13 @@ export class Serialize {
       _this = this || _this
       const v0 = _this ? _this[k] : v
       if (typeof v0 === 'object') {
-        v0.toJSON = v0.toJSON || v0.toString
-        for (const [name, r] of Object.entries(regis)) {
-          if (v0 instanceof r) {
-            return {
-              $id,
-              [`$${name}`]: v0.toJSON()
-            }
+        for (const [key, R] of Object.entries(regis)) {
+          if (compareNotFalsy(v0.constructor, (R.prototype || {}).constructor) ||
+              compareNotFalsy(v0.__name__, R.__name__)) {
+            const parent = { $id } as any
+            const toJSON = (R.toJSON || (R.prototype || {}).toJSON || v0.toJSON || v0.toString).bind(v0)
+            parent[`$${key}`] = toJSON(_this[k], parent)
+            return parent
           }
         }
       }
@@ -69,9 +67,9 @@ export class Serialize {
   parse (repr: string) {
     return this.options.parse(repr, (_, v) => {
       if (v && typeof v === 'object' && v.$id === this.options.$id) {
-        for (const [k0, v0] of Object.entries(this.registrar)) {
-          if (v[`$${k0}`]) {
-            return v0.fromJSON(v[`$${k0}`])
+        for (const [key, R] of Object.entries(this.registrar)) {
+          if (v[`$${key}`]) {
+            return R.fromJSON(v[`$${key}`], v)
           }
         }
       }
@@ -80,28 +78,55 @@ export class Serialize {
   }
 }
 
-export const Item = (
-  K: any,
+export const RegExpProp = Item<RegExp, RegExpConstructor>(RegExp, {
+  fromJSON (current: any) {
+    const { source, flags } = current
+    return new RegExp(source, flags)
+  },
+  toJSON (_this: any) {
+    const { source, flags } = _this
+    return { source, flags }
+  }
+})
+
+export const MongoDateProp = Item(Date, {
+  name: 'date'
+})
+
+export const MongoRegExpProp = Item<RegExp, RegExpConstructor>(RegExp, {
+  name: 'regex',
+  fromJSON (_this: string, parent: { $options?: string }) {
+    return new RegExp(_this, parent.$options)
+  },
+  toJSON (_this: any, parent: any) {
+    parent.$options = _this.flags
+    return _this.source
+  }
+})
+
+export function Item<T, Constructor extends { prototype: any } = { new (): T }> (
+  K: Constructor,
   options: {
     name?: string,
-    toJSON?: (_this: any) => any,
-    fromJSON?: (_this: any) => any
+    toJSON?: (_this: T, parent: any) => any,
+    fromJSON?: (current: any, parent: any) => any
   }
-) => {
-  const { name, toJSON, fromJSON } = options
-
-  if (name) {
-    Object.assign(K, { __name__: name })
-  }
-
-  if (fromJSON) {
-    Object.assign(K, { fromJSON })
+) {
+  const ItemProp = class {
+    static __name__ = options.name
+    static fromJSON = options.fromJSON
+    static toJSON = options.toJSON
   }
 
-  if (toJSON) {
-    toJSON.bind(K)
-    Object.assign(K.prototype, { toJSON })
-  }
+  ItemProp.prototype.constructor = K.prototype.constructor
 
-  return K
+  return ItemProp
+}
+
+function isClass (k: any): k is { prototype: { constructor: any } } {
+  return !!(k.prototype && k.prototype.constructor)
+}
+
+function compareNotFalsy (a: any, b: any) {
+  return !!a && a === b
 }
