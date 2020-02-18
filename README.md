@@ -7,7 +7,6 @@ Serialize any JavaScript classes, as long as you provides how-to.
 This package intentionally has no dependencies, but you might want to customize with some packages, such as
 
 - [json-stable-stringify](https://github.com/substack/json-stable-stringify)
-- [uuid](https://github.com/uuidjs/uuid) or [nanoid](https://github.com/ai/nanoid)
 
 ## Usage
 

@@ -27,7 +27,7 @@ class CustomClass1 {
 }
 
 describe('Default functions', () => {
-  const ser = new Serialize([Date, RegExpProp, CustomClass1])
+  const ser = new Serialize([RegExpProp, CustomClass1])
   const r = ser.stringify({
     a: new Date(),
     r: /^hello /gi,

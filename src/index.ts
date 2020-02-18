@@ -9,10 +9,11 @@ type ParseFunction = (
 ) => any
 
 export class Serialize {
-  private registrar: Record<string, {
+  private readonly registrar: {
     R: Function
+    key: any
     fromJSON: (current: any, parent: any) => any
-  }>
+  }[] = []
 
   private prefix = '__'
   private stringifyFunction: StringifyFunction = JSON.stringify
@@ -34,24 +35,24 @@ export class Serialize {
     this.stringifyFunction = options.stringify || this.stringifyFunction
     this.parseFunction = options.parse || this.parseFunction
 
-    this.registrar = registrations.reduce((prev, R) => {
-      const { __prefix__, __name__ } = R as any
-
-      // @ts-ignore
-      const fromJSON = R.fromJSON || ((arg: any) => isClass(R) ? new R(arg) : arg)
-      const key = (typeof __prefix__ === 'string' ? __prefix__ : this.prefix) +
-        (__name__ || (isClass(R)
+    this.registrar.push(
+      { R: Date, key: this.getKey(undefined, Date.prototype.constructor.name), fromJSON: (s) => new Date(s) },
+      ...registrations.map((R) => {
+        // @ts-ignore
+        const fromJSON = R.fromJSON || ((arg: any) => isClass(R) ? new R(arg) : arg)
+        const key = this.getKey((R as any).__prefix__, (R as any).__name__ || (isClass(R)
           ? R.prototype.constructor.name
           : getFunctionName(R)))
 
-      return {
-        ...prev,
-        [key]: {
+        return {
           R,
+          key,
           fromJSON
         }
-      }
-    }, {})
+      })
+    )
+
+    this.registrar.reverse()
   }
 
   stringify (obj: any) {
@@ -62,10 +63,9 @@ export class Serialize {
       _this = this || _this
       const v0 = _this ? _this[k] : v
       if (typeof v0 === 'object') {
-        for (const [key, { R }] of Object.entries(pThis.registrar)) {
+        for (const { R, key } of pThis.registrar) {
           if (compareNotFalsy(v0.constructor, (R.prototype || {}).constructor) ||
-              compareNotFalsy((v0.__prefix__ !== undefined ? v0.__prefix__ : pThis.prefix) +
-                v0.__name__, key)) {
+              compareNotFalsy(pThis.getKey(v0.__prefix__, v0.__name__), key)) {
             const parent = {} as any
             parent[key] = (
               ((R as any).toJSON || (R.prototype || {}).toJSON || v0.toJSON || v0.toString).bind(v0)
@@ -75,8 +75,10 @@ export class Serialize {
         }
       } else if (typeof v0 === 'function') {
         const parent = {} as any
-        parent[pThis.prefix + 'function'] = (
-          (v0.toJSON || v0.toString).bind(v0)
+        parent[pThis.getKey(undefined, 'function')] = (
+          (v0.toJSON || (() => {
+            return v0.toString().replace(/^.+?\{/s, '').replace(/\}.*$/s, '').trim()
+          })).bind(v0)
         )(_this[k], parent)
 
         return parent
@@ -89,19 +91,23 @@ export class Serialize {
   parse (repr: string) {
     return this.parseFunction(repr, (_, v) => {
       if (v && typeof v === 'object') {
-        for (const [key, { fromJSON }] of Object.entries(this.registrar)) {
+        for (const { key, fromJSON } of this.registrar) {
           if (v[key]) {
             return fromJSON(v[key], v)
           }
         }
 
-        if (v[this.prefix + 'function']) {
+        if (v[this.getKey(undefined, 'function')]) {
           // eslint-disable-next-line no-new-func
-          return new Function(v[this.prefix + 'function'])
+          return new Function(v[this.getKey(undefined, 'function')])
         }
       }
       return v
     })
+  }
+
+  private getKey (prefix: any, name: any) {
+    return (typeof prefix === 'string' ? prefix : this.prefix) + name
   }
 }
 
