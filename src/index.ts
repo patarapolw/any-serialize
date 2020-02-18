@@ -14,7 +14,7 @@ export class Serialize {
     fromJSON: (current: any, parent: any) => any
   }>
 
-  id = ''
+  private prefix = '__'
   private stringifyFunction: StringifyFunction = JSON.stringify
   private parseFunction: ParseFunction = JSON.parse
 
@@ -25,21 +25,24 @@ export class Serialize {
      */
     registrations: Function[],
     options: {
-      id?: string,
+      prefix?: string
       stringify?: StringifyFunction,
       parse?: ParseFunction
     } = {}
   ) {
-    this.id = options.id || this.id
+    this.prefix = typeof options.prefix === 'string' ? options.prefix : this.prefix
     this.stringifyFunction = options.stringify || this.stringifyFunction
     this.parseFunction = options.parse || this.parseFunction
 
     this.registrar = registrations.reduce((prev, R) => {
+      const { __prefix__, __name__ } = R as any
+
       // @ts-ignore
       const fromJSON = R.fromJSON || ((arg: any) => isClass(R) ? new R(arg) : arg)
-      const key = (R as any).__name__ || `${this.id}__${(isClass(R)
-        ? R.prototype.constructor.name
-        : getFunctionName(R))}`
+      const key = (typeof __prefix__ === 'string' ? __prefix__ : this.prefix) +
+        (__name__ || (isClass(R)
+          ? R.prototype.constructor.name
+          : getFunctionName(R)))
 
       return {
         ...prev,
@@ -52,19 +55,19 @@ export class Serialize {
   }
 
   stringify (obj: any) {
-    const id = this.id
-    const regis = this.registrar
+    const pThis = this
 
     return this.stringifyFunction(obj, function (k, v, _this) {
       // @ts-ignore
       _this = this || _this
       const v0 = _this ? _this[k] : v
       if (typeof v0 === 'object') {
-        for (const [key, { R }] of Object.entries(regis)) {
+        for (const [key, { R }] of Object.entries(pThis.registrar)) {
           if (compareNotFalsy(v0.constructor, (R.prototype || {}).constructor) ||
-              compareNotFalsy(v0.__name__, key)) {
+              compareNotFalsy((v0.__prefix__ !== undefined ? v0.__prefix__ : pThis.prefix) +
+                v0.__name__, key)) {
             const parent = {} as any
-            parent[`${id}${key}`] = (
+            parent[key] = (
               ((R as any).toJSON || (R.prototype || {}).toJSON || v0.toJSON || v0.toString).bind(v0)
             )(_this[k], parent)
             return parent
@@ -72,7 +75,7 @@ export class Serialize {
         }
       } else if (typeof v0 === 'function') {
         const parent = {} as any
-        parent[`${id}__function`] = (
+        parent[pThis.prefix + 'function'] = (
           (v0.toJSON || v0.toString).bind(v0)
         )(_this[k], parent)
 
@@ -92,9 +95,9 @@ export class Serialize {
           }
         }
 
-        if (v[`${this.id}__function`]) {
+        if (v[this.prefix + 'function']) {
           // eslint-disable-next-line no-new-func
-          return new Function(v[`${this.id}__function`])
+          return new Function(v[this.prefix + 'function'])
         }
       }
       return v
@@ -114,11 +117,13 @@ export const RegExpProp = Item<RegExp, RegExpConstructor>(RegExp, {
 })
 
 export const MongoDateProp = Item(Date, {
+  prefix: '',
   name: '$date',
   fromJSON: (current: string) => new Date(current)
 })
 
 export const MongoRegExpProp = Item<RegExp, RegExpConstructor>(RegExp, {
+  prefix: '',
   name: '$regex',
   fromJSON (current: string, parent: { $options?: string }) {
     return new RegExp(current, parent.$options)
@@ -132,12 +137,14 @@ export const MongoRegExpProp = Item<RegExp, RegExpConstructor>(RegExp, {
 export function Item<T, Constructor extends { prototype: any } = { new (): T }> (
   K: Constructor,
   options: {
+    prefix?: string
     name?: string,
     toJSON?: (_this: T, parent: any) => any,
     fromJSON?: (current: any, parent: any) => T
   }
 ) {
   const ItemProp = class {
+    static __prefix__ = options.prefix
     static __name__ = options.name
     static fromJSON = options.fromJSON
     static toJSON = options.toJSON

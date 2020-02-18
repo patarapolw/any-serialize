@@ -2,9 +2,10 @@ import { Serialize, RegExpProp } from '../src'
 
 class CustomClass1 {
   /**
-   * Please ensure that this is a unique enough name, such as uuid or nanoid
+   * You can turn off prefix with __prefix__ = ''
    */
-  static __name__ = '$$custom'
+  // static __prefix__ = ''
+  static __name__ = 'unsafeName'
 
   static fromJSON (arg: {a: number, b: number}) {
     const { a, b } = arg
