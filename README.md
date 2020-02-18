@@ -1,6 +1,6 @@
 # any-serialize
 
-Serialize any JavaScript objects, as long as you provides how-to. I have already provided `Date` and `RegExp`.
+Serialize any JavaScript objects, as long as you provides how-to. I have already provided `Date`, `RegExp` and `Function`.
 
 [![npm version](https://badge.fury.io/js/any-serialize.svg)](https://badge.fury.io/js/any-serialize)
 
@@ -12,7 +12,7 @@ This package intentionally has no dependencies, but you might want to customize 
 
 See [/tests](/tests).
 
-`Date`, `RegExp`, `Function` is already serialable via this library by default. Classes are not. You can provide a custom way to serialize, including native ones.
+`Date`, `RegExp` and `Function` is already serialable via this library by default. Classes are not. You can provide a custom way to serialize, including the forementioned `Date`, `RegExp` and `Function`.
 
 ```js
 import { Serialize } from 'any-serialize'
