@@ -1,6 +1,6 @@
 # any-serialize
 
-Serialize any JavaScript classes, as long as you provides how-to.
+Serialize any JavaScript objects, as long as you provides how-to. I have already provided `Date` and `RegExp`.
 
 [![npm version](https://badge.fury.io/js/any-serialize.svg)](https://badge.fury.io/js/any-serialize)
 
@@ -12,17 +12,21 @@ This package intentionally has no dependencies, but you might want to customize 
 
 See [/tests](/tests).
 
-Note that `Date` is already serialable via this method by default; however, `RegExp`, `Function` and `Class` might not be.
+`Date`, `RegExp`, `Function` is already serialable via this library by default. Classes are not. You can provide a custom way to serialize, including native ones.
 
 ```js
-import { Serialize, Item } from 'any-serialize'
+import { Serialize } from 'any-serialize'
 
-class CustomClass {
-  static __name__ = 'custom_name'
+class CustomClass1 {
+  /**
+   * You can turn off prefix with __prefix__ = ''
+   */
+  // static __prefix__ = ''
+  static __key__ = 'unsafeName'
 
   static fromJSON (arg: {a: number, b: number}) {
     const { a, b } = arg
-    return new CustomClass(a, b)
+    return new CustomClass1(a, b)
   }
 
   a: number
@@ -39,42 +43,33 @@ class CustomClass {
   }
 }
 
-const ser = new Serialize([Date, CustomClass, Item(RegExp, {
-  toJSON () {
-    const { source, flags } = this as RegExp
-    return { source, flags }
-  },
-  fromJSON ({ source, flags }) {
-    return new RegExp(source, flags)
-  }
-})])
+cconst ser = new Serialize()
+ser.register(CustomClass1)
 
 const r = ser.stringify({
   a: new Date(),
-  r: /^hello$/,
-  c: new CustomClass(1, 3)
+  r: /^hello /gi,
+  c: new CustomClass1(1, 3),
+  f: (a: number, b: number) => a + b
 })
 
 console.log(r)
-// {"a":{"$Date":"2020-02-17T13:37:42.279Z"},"r":{"$RegExp":{"source":"^hello$","flags":""}},"c":{"$custom_name":{"a":1,"b":3}}}
-console.log(ser.parse(r))
-// { a: 2020-02-17T13:37:42.279Z,
-//   r: /^hello$/,
-//   c: CustomClass { a: 1, b: 3 } }
-```
+// {"a":{"__Date":"2020-02-18T17:53:37.557Z"},"r":{"__RegExp":{"source":"^hello ","flags":"gi"}},"c":{"__unsafeName":{"a":1,"b":3}},"f":{"__function":"(a, b) => a + b"}}
 
-To ensure collision prevention, you might set `$id` with `nanoid` or `uuid`.
-
-And, on perhaps, client-side, you deserialize with the same `$id`.
-
-```ts
-const ser = new Serialize([Date, Item(...)], { $id })
+const s = ser.parse(r)
+console.log(s)
+// { a: 2020-02-18T17:52:02.555Z,
+//   r: /^hello /gi,
+//   c: CustomClass1 { a: 1, b: 3 },
+//   f: [Function: anonymous] }
+console.log(ser.stringify(s))
+// {"a":{"__Date":"2020-02-18T17:53:37.557Z"},"r":{"__RegExp":{"source":"^hello ","flags":"gi"}},"c":{"__unsafeName":{"a":1,"b":3}},"f":{"__function":"(a, b) => a + b"}}
 ```
 
 If you to create a hash or ensure key order, you might use [json-stable-stringify](https://github.com/substack/json-stable-stringify)
 
 ```ts
-const ser = new Serialize([Date, Item(...)], {
+const ser = new Serialize({
   stringify(obj, replacer) {
     return stringify(obj, { replacer })
   }

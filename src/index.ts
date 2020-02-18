@@ -1,18 +1,14 @@
-type StringifyFunction = (
-  obj: any,
-  replacer: (k: string, v: any, _this?: any) => any
-) => string
-
-type ParseFunction = (
-  repr: string,
-  reviver: (k: string, v: any) => any
-) => any
+import {
+  StringifyFunction, ParseFunction, IRegistration,
+  isClass, getFunctionName, compareNotFalsy, functionToString
+} from './utils'
 
 export class Serialize {
   private readonly registrar: {
     R: Function
     key: any
-    fromJSON: (current: any, parent: any) => any
+    toJSON?: (_this: any, parent: any) => any
+    fromJSON?: (current: any, parent: any) => any
   }[] = []
 
   private prefix = '__'
@@ -24,7 +20,6 @@ export class Serialize {
      * For how to write a replacer and reviver, see
      * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON
      */
-    registrations: Function[],
     options: {
       prefix?: string
       stringify?: StringifyFunction,
@@ -35,26 +30,65 @@ export class Serialize {
     this.stringifyFunction = options.stringify || this.stringifyFunction
     this.parseFunction = options.parse || this.parseFunction
 
-    this.registrar.push(
-      { R: Date, key: this.getKey(undefined, Date.prototype.constructor.name), fromJSON: (s) => new Date(s) },
-      ...registrations.map((R) => {
+    this.register(
+      { item: Date },
+      {
+        item: RegExp,
+        toJSON (_this: any) {
+          const { source, flags } = _this
+          return { source, flags }
+        },
+        fromJSON (current: any) {
+          const { source, flags } = current
+          return new RegExp(source, flags)
+        }
+      }
+    )
+  }
+
+  /**
+   *
+   * @param rs Accepts Class constructors or IRegistration
+   */
+  register (...rs: ({ new(...args: any[]): any } | IRegistration)[]) {
+    this.registrar.unshift(
+      ...rs.map((r) => {
+        if (typeof r === 'function') {
+          const { __prefix__: prefix, __key__: key, fromJSON, toJSON } = r as any
+
+          return {
+            item: r,
+            prefix,
+            key,
+            fromJSON,
+            toJSON
+          }
+        }
+
+        return r
+      }).map(({
+        item: R, prefix, key, toJSON, fromJSON
+      }) => {
         // @ts-ignore
-        const fromJSON = R.fromJSON || ((arg: any) => isClass(R) ? new R(arg) : arg)
-        const key = this.getKey((R as any).__prefix__, (R as any).__name__ || (isClass(R)
+        fromJSON = fromJSON || ((arg: any) => isClass(R) ? new R(arg) : arg)
+        key = this.getKey(prefix, key || (isClass(R)
           ? R.prototype.constructor.name
           : getFunctionName(R)))
 
         return {
           R,
           key,
+          toJSON,
           fromJSON
         }
       })
     )
-
-    this.registrar.reverse()
   }
 
+  /**
+   *
+   * @param obj Uses `JSON.stringify` by default
+   */
   stringify (obj: any) {
     const pThis = this
 
@@ -62,38 +96,49 @@ export class Serialize {
       // @ts-ignore
       _this = this || _this
       const v0 = _this ? _this[k] : v
-      if (typeof v0 === 'object') {
-        for (const { R, key } of pThis.registrar) {
+      if (['object', 'function'].includes(typeof v0)) {
+        for (const { R, key, toJSON } of pThis.registrar) {
           if (compareNotFalsy(v0.constructor, (R.prototype || {}).constructor) ||
               compareNotFalsy(pThis.getKey(v0.__prefix__, v0.__name__), key)) {
             const parent = {} as any
             parent[key] = (
-              ((R as any).toJSON || (R.prototype || {}).toJSON || v0.toJSON || v0.toString).bind(v0)
+              (toJSON || (R.prototype || {}).toJSON || v0.toJSON || (() => {
+                return typeof v0 === 'function' ? functionToString(v0) : v0.toString()
+              })).bind(v0)
             )(_this[k], parent)
             return parent
           }
         }
-      } else if (typeof v0 === 'function') {
-        const parent = {} as any
-        parent[pThis.getKey(undefined, 'function')] = (
-          (v0.toJSON || (() => {
-            return v0.toString().replace(/^.+?\{/s, '').replace(/\}.*$/s, '').trim()
-          })).bind(v0)
-        )(_this[k], parent)
 
-        return parent
+        if (typeof v0 === 'function') {
+          const parent = {} as any
+          parent[pThis.getKey(undefined, 'function')] = (
+            (v0.toJSON || (() => {
+              return functionToString(v0)
+            })).bind(v0)
+          )(_this[k], parent)
+
+          return parent
+        }
       }
 
       return v
     })
   }
 
+  /**
+   *
+   * @param repr Uses `JSON.parse` by default
+   */
   parse (repr: string) {
     return this.parseFunction(repr, (_, v) => {
       if (v && typeof v === 'object') {
         for (const { key, fromJSON } of this.registrar) {
           if (v[key]) {
-            return fromJSON(v[key], v)
+            return (fromJSON || ((content: any) => {
+              // eslint-disable-next-line no-new-func
+              return new Function(content)
+            }))(v[key], v)
           }
         }
 
@@ -111,64 +156,5 @@ export class Serialize {
   }
 }
 
-export const RegExpProp = Item<RegExp, RegExpConstructor>(RegExp, {
-  fromJSON (current: any) {
-    const { source, flags } = current
-    return new RegExp(source, flags)
-  },
-  toJSON (_this: any) {
-    const { source, flags } = _this
-    return { source, flags }
-  }
-})
-
-export const MongoDateProp = Item(Date, {
-  prefix: '',
-  name: '$date',
-  fromJSON: (current: string) => new Date(current)
-})
-
-export const MongoRegExpProp = Item<RegExp, RegExpConstructor>(RegExp, {
-  prefix: '',
-  name: '$regex',
-  fromJSON (current: string, parent: { $options?: string }) {
-    return new RegExp(current, parent.$options)
-  },
-  toJSON (_this: any, parent: any) {
-    parent.$options = _this.flags
-    return _this.source
-  }
-})
-
-export function Item<T, Constructor extends { prototype: any } = { new (): T }> (
-  K: Constructor,
-  options: {
-    prefix?: string
-    name?: string,
-    toJSON?: (_this: T, parent: any) => any,
-    fromJSON?: (current: any, parent: any) => T
-  }
-) {
-  const ItemProp = class {
-    static __prefix__ = options.prefix
-    static __name__ = options.name
-    static fromJSON = options.fromJSON
-    static toJSON = options.toJSON
-  }
-
-  ItemProp.prototype.constructor = K.prototype.constructor
-
-  return ItemProp
-}
-
-function isClass (k: any): k is { prototype: { constructor: any } } {
-  return !!(k.prototype && k.prototype.constructor)
-}
-
-function compareNotFalsy (a: any, b: any) {
-  return !!a && a === b
-}
-
-function getFunctionName (R: Function) {
-  return R.toString().replace(/^function /, '').split('(')[0]
-}
+export * from './mongo'
+export * from './utils'

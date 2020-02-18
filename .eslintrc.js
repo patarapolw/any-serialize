@@ -19,7 +19,6 @@ module.exports = {
     '@typescript-eslint'
   ],
   rules: {
-    'no-useless-constructor': 0,
-    'no-extend-native': 0
+    'no-unused-vars': 0
   }
 }

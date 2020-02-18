@@ -1,8 +1,9 @@
-import { Serialize, MongoDateProp, MongoRegExpProp } from '../src'
-
-const ser = new Serialize([MongoDateProp, MongoRegExpProp])
+import { Serialize, MongoDate, MongoRegExp } from '../src'
 
 describe('mongo by using this module', () => {
+  const ser = new Serialize()
+  ser.register(MongoDate, MongoRegExp)
+
   it('mongo by using this module', () => {
     const r = ser.stringify({
       a: new Date(),
