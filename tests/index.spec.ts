@@ -1,7 +1,10 @@
 import { Serialize, RegExpProp } from '../src'
 
 class CustomClass1 {
-  static __name__ = 'custom_name'
+  /**
+   * Please ensure that this is a unique enough name, such as uuid or nanoid
+   */
+  static __name__ = '$$custom'
 
   static fromJSON (arg: {a: number, b: number}) {
     const { a, b } = arg
@@ -23,20 +26,26 @@ class CustomClass1 {
 }
 
 describe('Default functions', () => {
-  it('default', () => {
-    const ser = new Serialize([Date, RegExpProp, CustomClass1])
+  const ser = new Serialize([Date, RegExpProp, CustomClass1])
+  const r = ser.stringify({
+    a: new Date(),
+    r: /^hello /gi,
+    c: new CustomClass1(1, 3),
+    f: (a: number, b: number) => a + b
+  })
 
-    const r = ser.stringify({
-      a: new Date(),
-      r: /^hello /gi,
-      c: new CustomClass1(1, 3)
-    })
-
+  it('stringify', () => {
     console.log(r)
-    // {"a":{"$Date":"2020-02-17T13:37:42.279Z"},"r":{"$RegExp":{"source":"^hello$","flags":""}},"c":{"$custom_name":{"a":1,"b":3}}}
-    console.log(ser.parse(r))
-    // { a: 2020-02-17T13:37:42.279Z,
-    //   r: /^hello$/,
-    //   c: CustomClass { a: 1, b: 3 } }
+    // {"a":{"$Date":"2020-02-18T14:39:51.062Z"},"r":{"$RegExp":{"source":"^hello ","flags":"gi"}},
+    // "c":{"$custom_name":{"a":1,"b":3}}}
+  })
+
+  it('parse', () => {
+    const s = ser.parse(r)
+    console.log(s)
+    // { a: 2020-02-18T14:39:51.062Z,
+    //   r: /^hello /gi,
+    //   c: CustomClass1 { a: 1, b: 3 } }
+    console.log(ser.stringify(s))
   })
 })
