@@ -27,7 +27,7 @@ const { spawnSafe } = u
 
   const s = fs.readFileSync('deploy/index.html', 'utf8').replace(
     '/** script **/',
-    fs.readFileSync('deploy/script.js', 'utf8')
+    '\n' + fs.readFileSync('deploy/script.js', 'utf8')
   )
   fs.writeFileSync('gh-pages/index.html', s)
 
