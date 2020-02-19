@@ -15,37 +15,39 @@
     <pre><code lang="javascript" class="language-javascript" id="viewer"></code></pre>
     <div id="script">
 <script type="module" async>
-  // Please try this inside your console.
+// Please try this inside your console.
 
-  // For how to use this inside web browsers, see https://unpkg.com/
-  import { Serialize, FullFunctionAdapter } from 'https://unpkg.com/any-serialize?module'
-  
-  var ser = new Serialize()
+// For how to use this inside web browsers, see https://unpkg.com/
+// import { Serialize, FullFunctionAdapter } from 'https://unpkg.com/any-serialize?module'
+import { Serialize, FullFunctionAdapter } from './lib/index.js'
 
-  // FullFunctionAdapter is required to deserialize Functions (because it can be unsafe).
-  ser.register(FullFunctionAdapter)
-  console.log('ser =', ser)
-  
-  var obj = {
-    a: new Date(),
-    r: /^hello /gi,
-    f: (a, b) => a + b
-  }
-  console.log('obj =', obj)
-  
-  var stringifiedObj = ser.stringify(obj)
-  console.log('stringifiedObj =', stringifiedObj)
-  
-  var parsedObj = ser.parse(stringifiedObj)
-  console.log('parsedObj =', parsedObj)
-  
-  var reStringifiedObj = ser.stringify(parsedObj)
-  console.log('reStringifiedObj =', reStringifiedObj)
+const ser = new Serialize()
 
-  var reParsedObj = ser.parse(reStringifiedObj)
-  console.log('reParsedObj =', reParsedObj)
+// FullFunctionAdapter is required to deserialize Functions (because it can be unsafe).
+ser.register(FullFunctionAdapter)
+console.log('ser =', ser)
 
-  console.log(reParsedObj.f(1, 2))
+const obj = {
+  a: new Date(),
+  r: /^hello /gi,
+  f: (a, b) => a + b
+}
+console.log('obj =', obj)
+
+const stringifiedObj = ser.stringify(obj)
+console.log('stringifiedObj =', stringifiedObj)
+
+const parsedObj = ser.parse(stringifiedObj)
+console.log('parsedObj =', parsedObj)
+
+const reStringifiedObj = ser.stringify(parsedObj)
+console.log('reStringifiedObj =', reStringifiedObj)
+
+const reParsedObj = ser.parse(reStringifiedObj)
+console.log('reParsedObj =', reParsedObj)
+
+console.log(reParsedObj.f(1, 2))
+
 </script>
     </div>
     
