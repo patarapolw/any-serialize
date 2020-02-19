@@ -1,41 +1,57 @@
-<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/themes/prism.css" rel="stylesheet" />
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>any-serialize.js</title>
 
-<p>Open the console, and try.</p>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/themes/prism.css" rel="stylesheet" />
+    <style>
+      .token.operator {
+        background: unset;
+      }
+    </style>
+  </head>
 
-<pre>
-  <code lang="html" class="language-html" id="viewer">
+  <body>
+    <pre><code lang="javascript" class="language-javascript" id="viewer"></code></pre>
+    <div id="script">
+<script type="module">
+  // Please try this inside your console.
 
-  </code>
-</pre>
+  // For how to use this inside web browsers, see https://unpkg.com/
+  import { Serialize, FullFunctionAdapter } from 'https://unpkg.com/any-serialize?module'
+  
+  var ser = new Serialize()
 
-<div id="script">
-  <script type="module">
-    import { Serialize } from 'https://unpkg.com/any-serialize'
-    
-    var ser = new Serialize()
-    console.log('ser =', ser)
-    
-    var obj = {
-      a: new Date(),
-      r: /^hello /gi,
-      f: (a, b) => a + b
-    }
-    console.log('obj =', obj)
-    
-    var stringifiedObj = ser.stringify(obj)
-    console.log('stringifiedObj =', stringifiedObj)
-    
-    var parsedObj = ser.parse(stringifiedObj)
-    console.log('parsedObj =', parsedObj)
-    
-    var reStringifiedObj = ser.stringify(parsedObj)
-    console.log('reStringifiedObj =', reStringifiedObj)
-  </script>
-</div>
+  // FullFunctionAdapter is required to deserialize Functions (because it can be unsafe).
+  ser.register(FullFunctionAdapter)
+  console.log('ser =', ser)
+  
+  var obj = {
+    a: new Date(),
+    r: /^hello /gi,
+    f: (a, b) => a + b
+  }
+  console.log('obj =', obj)
+  
+  var stringifiedObj = ser.stringify(obj)
+  console.log('stringifiedObj =', stringifiedObj)
+  
+  var parsedObj = ser.parse(stringifiedObj)
+  console.log('parsedObj =', parsedObj)
+  
+  var reStringifiedObj = ser.stringify(parsedObj)
+  console.log('reStringifiedObj =', reStringifiedObj)
 
-<script>
-document.getElementById('viewer').innerHTML = document.getElementById('script').innerHTML
+  var reParsedObj = ser.parse(reStringifiedObj)
+  console.log('reParsedObj =', reParsedObj)
 </script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/components/prism-core.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    </div>
+    
+    <script>
+    document.getElementById('viewer').innerHTML = document.getElementById('script').innerHTML.replace(/</g, '&lt;')
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  </body>
+</html>

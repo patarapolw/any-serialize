@@ -4,7 +4,6 @@
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
-  "unpkg": "umd/index.min.js",
   "author": "Pacharapol Withayasakpunt <patarapolw@gmail.com> (https://polvcode.dev)",
   "license": "MIT",
   "files": [

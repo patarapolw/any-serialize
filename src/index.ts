@@ -4,7 +4,7 @@ import {
 } from './utils'
 
 export class Serialize {
-  private readonly registrar: {
+  private registrar: {
     R: Function
     key: any
     toJSON?: (_this: any, parent: any) => any
@@ -86,6 +86,18 @@ export class Serialize {
         }
       })
     )
+  }
+
+  unregister (...rs: ({ new(...args: any[]): any } | IRegistration)[]) {
+    this.registrar = this.registrar.filter(({ R, key }) => {
+      return !rs.some((r) => {
+        if (typeof r === 'function') {
+          return r.constructor === R.constructor
+        } else {
+          return compareNotFalsy(r.key, key) || compareNotFalsy(r.item.constructor, R.constructor)
+        }
+      })
+    })
   }
 
   /**
