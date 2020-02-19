@@ -1,3 +1,24 @@
 <p>Open the console, and <code>Serialize</code> is your global object.</p>
 
 <script src="https://unpkg.com/any-serialize"></script>
+
+<script>
+var ser = new Serialize()
+console.log('ser =', ser)
+
+var obj = {
+  a: new Date(),
+  r: /^hello /gi,
+  f: (a, b) => a + b
+}
+console.log('obj =', obj)
+
+var stringifiedObj = ser.stringify(obj)
+console.log('stringifiedObj =', stringifiedObj)
+
+var parsedObj = ser.parse(stringifiedObj)
+console.log('parsedObj =', parsedObj)
+
+var reStringifiedObj = ser.stringify(parsedObj)
+console.log('reStringifiedObj =', reStringifiedObj)
+</script>
