@@ -1,7 +1,13 @@
-// Please try this inside your console.
+// Please open your JavaScript console (i.e. Inspect Element) to see the results.
 
-// For how to use this inside web browsers, see https://unpkg.com/
-// import { Serialize, FullFunctionAdapter } from 'https://unpkg.com/any-serialize?module'
+/**
+ * For how to use this inside web browsers, see https://unpkg.com/
+ * import { Serialize, FullFunctionAdapter } from 'https://unpkg.com/any-serialize?module'
+ *
+ * Or,
+ * git clone --single-branch -b gh-pages https://github.com/patarapolw/any-serialize.git
+ * And copy ./lib to your project
+ */
 import { Serialize, FullFunctionAdapter } from './lib/index.js'
 
 const ser = new Serialize()
