@@ -1,4 +1,4 @@
-import { Serialize, MongoDateAdapter, MongoRegExpAdapter } from '../src'
+import { Serialize, MongoDateAdapter, MongoRegExpAdapter } from '../src/index'
 
 describe('mongo by using this module', () => {
   const ser = new Serialize()

@@ -1,24 +1,41 @@
-<p>Open the console, and <code>Serialize</code> is your global object.</p>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/themes/prism.css" rel="stylesheet" />
 
-<script src="https://unpkg.com/any-serialize"></script>
+<p>Open the console, and try.</p>
+
+<pre>
+  <code lang="html" class="language-html" id="viewer">
+
+  </code>
+</pre>
+
+<div id="script">
+  <script type="module">
+    import { Serialize } from 'https://unpkg.com/any-serialize'
+    
+    var ser = new Serialize()
+    console.log('ser =', ser)
+    
+    var obj = {
+      a: new Date(),
+      r: /^hello /gi,
+      f: (a, b) => a + b
+    }
+    console.log('obj =', obj)
+    
+    var stringifiedObj = ser.stringify(obj)
+    console.log('stringifiedObj =', stringifiedObj)
+    
+    var parsedObj = ser.parse(stringifiedObj)
+    console.log('parsedObj =', parsedObj)
+    
+    var reStringifiedObj = ser.stringify(parsedObj)
+    console.log('reStringifiedObj =', reStringifiedObj)
+  </script>
+</div>
 
 <script>
-var ser = new Serialize()
-console.log('ser =', ser)
-
-var obj = {
-  a: new Date(),
-  r: /^hello /gi,
-  f: (a, b) => a + b
-}
-console.log('obj =', obj)
-
-var stringifiedObj = ser.stringify(obj)
-console.log('stringifiedObj =', stringifiedObj)
-
-var parsedObj = ser.parse(stringifiedObj)
-console.log('parsedObj =', parsedObj)
-
-var reStringifiedObj = ser.stringify(parsedObj)
-console.log('reStringifiedObj =', reStringifiedObj)
+document.getElementById('viewer').innerHTML = document.getElementById('script').innerHTML
 </script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/plugins/autoloader/prism-autoloader.min.js"></script>

@@ -1,4 +1,4 @@
-import { Serialize, FullFunctionAdapter } from '../src'
+import { Serialize, FullFunctionAdapter } from '../src/index'
 
 class CustomClass1 {
   /**
