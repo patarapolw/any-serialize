@@ -3,7 +3,7 @@ import {
   FullFunctionAdapter,
   MongoDateAdapter,
   MongoRegExpAdapter
-} from '.'
+} from './src'
 
 Object.assign(window, { Serialize })
 Object.assign(Serialize, {
