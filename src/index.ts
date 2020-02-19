@@ -99,7 +99,7 @@ export class Serialize {
       // @ts-ignore
       _this = this || _this
       const v0 = _this ? _this[k] : v
-      if (['object', 'function'].includes(typeof v0)) {
+      if (['object', 'function'].indexOf(typeof v0) !== -1) {
         for (const { R, key, toJSON } of pThis.registrar) {
           if (compareNotFalsy(v0.constructor, (R.prototype || {}).constructor) ||
               compareNotFalsy(pThis.getKey(v0.__prefix__, v0.__name__ || (typeof v0 === 'function'

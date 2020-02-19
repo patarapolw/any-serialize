@@ -4,9 +4,7 @@ Serialize / Deserialize any JavaScript objects, as long as you provides how-to. 
 
 [![npm version](https://badge.fury.io/js/any-serialize.svg)](https://badge.fury.io/js/any-serialize)
 
-This package intentionally has no dependencies, but you might want to customize with some packages, such as
-
-- [json-stable-stringify](https://github.com/substack/json-stable-stringify)
+This package intentionally has no dependencies, and can be used safely in browser.
 
 ## Usage
 

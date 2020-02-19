@@ -1,12 +1,18 @@
 {
   "name": "any-serialize",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "unpkg": "lib/browser.js",
   "author": "Pacharapol Withayasakpunt <patarapolw@gmail.com> (https://polvcode.dev)",
   "license": "MIT",
+  "files": [
+    "lib",
+    "src"
+  ],
   "scripts": {
-    "prepack": "tsc -P src/tsconfig.json",
+    "build": "tsc -P src/tsconfig.json",
+    "prepack": "yarn build",
     "test": "ts-mocha tests/**/*.spec.ts"
   },
   "devDependencies": {

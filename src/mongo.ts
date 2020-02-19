@@ -1,13 +1,13 @@
 import { IRegistration } from './utils'
 
-export const MongoDate: IRegistration = {
+export const MongoDateAdapter: IRegistration = {
   prefix: '',
   key: '$date',
   item: Date,
   fromJSON: (current) => new Date(current)
 }
 
-export const MongoRegExp: IRegistration = {
+export const MongoRegExpAdapter: IRegistration = {
   prefix: '',
   key: '$regex',
   item: RegExp,
