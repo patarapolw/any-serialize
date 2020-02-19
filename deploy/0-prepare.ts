@@ -7,4 +7,7 @@ console.log(u)
   await u.spawnSafe('git', ['rm', '-rf', '.'], {
     cwd: 'gh-pages'
   })
+  await u.spawnSafe('touch', ['.nojekyll'], {
+    cwd: 'gh-pages'
+  })
 })().catch(console.error)

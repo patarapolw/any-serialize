@@ -1,10 +1,11 @@
-import * as fs from 'fs-extra'
+import fs from 'fs-extra'
 import glob from 'glob'
 
 import * as u from './utils'
+const { spawnSafe } = u
 
 ;(async () => {
-  await u.spawnSafe('yarn', ['build'])
+  await spawnSafe('yarn', ['build'])
 
   await new Promise((resolve, reject) => {
     glob('lib/**/*.js', (err, matches) => {
@@ -14,8 +15,8 @@ import * as u from './utils'
 
       matches.map((m) => {
         const s = fs.readFileSync(m, 'utf8').replace(
-          /^(?<pre>import .+)(?<bOpen>['"])(?<name>.+?)(?<ext>\.[tj]?s)?(?<bClose>['"])/g,
-          '$<pre>$<bOpen>$<name>.js$<bClose>'
+          /(?<start>^|\n)(?<pre>(?:im|ex)port .+)(?<bOpen>['"])(?<name>.+?)(?<ext>\.[tj]?s)?(?<bClose>['"])/g,
+          '$<start>$<pre>$<bOpen>$<name>.js$<bClose>'
         )
         fs.ensureFileSync(`gh-pages/${m}`)
         fs.writeFileSync(`gh-pages/${m}`, s)
@@ -30,13 +31,13 @@ import * as u from './utils'
   )
   fs.writeFileSync('gh-pages/index.html', s)
 
-  await u.spawnSafe('git', ['add', '.'], {
+  await spawnSafe('git', ['add', '.'], {
     cwd: 'gh-pages'
   })
-  await u.spawnSafe('git', ['commit', '-m', 'deploy'], {
+  await spawnSafe('git', ['commit', '-m', 'deploy'], {
     cwd: 'gh-pages'
   })
-  await u.spawnSafe('git', ['push', 'origin', 'gh-pages'], {
+  await spawnSafe('git', ['push', 'origin', 'gh-pages'], {
     cwd: 'gh-pages'
   })
 })().catch(console.error)
