@@ -31,13 +31,13 @@ const { spawnSafe } = u
   )
   fs.writeFileSync('gh-pages/index.html', s)
 
-  // await spawnSafe('git', ['add', '.'], {
-  //   cwd: 'gh-pages'
-  // })
-  // await spawnSafe('git', ['commit', '-m', 'deploy'], {
-  //   cwd: 'gh-pages'
-  // })
-  // await spawnSafe('git', ['push', 'origin', 'gh-pages'], {
-  //   cwd: 'gh-pages'
-  // })
+  await spawnSafe('git', ['add', '.'], {
+    cwd: 'gh-pages'
+  })
+  await spawnSafe('git', ['commit', '-m', 'deploy'], {
+    cwd: 'gh-pages'
+  })
+  await spawnSafe('git', ['push', 'origin', 'gh-pages'], {
+    cwd: 'gh-pages'
+  })
 })().catch(console.error)
