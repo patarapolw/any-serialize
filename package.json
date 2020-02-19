@@ -14,7 +14,7 @@
   "scripts": {
     "build": "tsc -P src/tsconfig.json",
     "prepack": "yarn build",
-    "test": "ts-mocha tests/**/*.spec.ts"
+    "test": "ts-mocha -r esm tests/**/*.spec.ts"
   },
   "devDependencies": {
     "@types/mocha": "^5.2.7",
@@ -26,6 +26,7 @@
     "eslint-plugin-node": ">=9.1.0",
     "eslint-plugin-promise": ">=4.2.1",
     "eslint-plugin-standard": ">=4.0.0",
+    "esm": "^3.2.25",
     "mocha": "^6.0.0",
     "ts-mocha": "^6.0.0",
     "typescript": "^3.7.5"
