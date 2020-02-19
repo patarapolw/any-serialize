@@ -7,6 +7,8 @@
  * Or,
  * git clone --single-branch -b gh-pages https://github.com/patarapolw/any-serialize.git
  * And copy ./lib to your project
+ *
+ * For NPM users, it's `npm i any-serialize`
  */
 import { Serialize, FullFunctionAdapter } from './lib/index.js'
 
