@@ -157,7 +157,7 @@ export const FullFunctionAdapter: IRegistration = {
   toJSON: (_this) => functionToString(_this.toString()),
   fromJSON: (content: string) => {
     // eslint-disable-next-line no-new-func
-    return new Function(content)
+    return new Function(`return ${content}`)()
   }
 }
 

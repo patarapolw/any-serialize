@@ -40,17 +40,19 @@ describe('Default functions', () => {
 
   it('stringify', () => {
     console.log(r)
-    // {"a":{"__Date":"2020-02-18T17:53:37.557Z"},"r":{"__RegExp":{"source":"^hello ","flags":"gi"}},"c":{"__unsafeName":{"a":1,"b":3}},"f":{"__function":"(a, b) => a + b"}}
+    // {"a":{"__Date":"2020-02-19T07:20:23.364Z"},"r":{"__RegExp":{"source":"^hello ","flags":"gi"}},"c":{"__unsafeName":{"a":1,"b":3}},"f":{"__Function":"(a, b) => a + b"}}
   })
 
   it('parse', () => {
     const s = ser.parse(r)
     console.log(s)
-    // { a: 2020-02-18T17:52:02.555Z,
+    // { a: 2020-02-19T07:20:23.364Z,
     //   r: /^hello /gi,
     //   c: CustomClass1 { a: 1, b: 3 },
-    //   f: [Function: anonymous] }
+    //   f: [Function] }
     console.log(ser.stringify(s))
-    // {"a":{"__Date":"2020-02-18T17:53:37.557Z"},"r":{"__RegExp":{"source":"^hello ","flags":"gi"}},"c":{"__unsafeName":{"a":1,"b":3}},"f":{"__function":"(a, b) => a + b"}}
+    // {"a":{"__Date":"2020-02-19T07:20:23.364Z"},"r":{"__RegExp":{"source":"^hello ","flags":"gi"}},"c":{"__unsafeName":{"a":1,"b":3}},"f":{"__Function":"(a, b) => a + b"}}
+    console.log(s.f(1, 2))
+    // 3
   })
 })
