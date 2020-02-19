@@ -5,7 +5,7 @@
  * import { Serialize, FullFunctionAdapter } from 'https://unpkg.com/any-serialize?module'
  *
  * Or,
- * git clone --single-branch -b gh-pages https://github.com/patarapolw/any-serialize.git
+ * Download and unzip https://github.com/patarapolw/any-serialize/archive/gh-pages.zip
  * And copy ./lib to your project
  *
  * For NPM users, it's `npm i any-serialize`
