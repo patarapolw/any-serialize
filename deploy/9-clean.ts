@@ -1,4 +1,5 @@
-import { spawnSafe } from './utils'
+import * as u from './utils'
+const { spawnSafe } = u
 
 ;(async () => {
   await spawnSafe('git', [

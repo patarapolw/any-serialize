@@ -1,13 +1,13 @@
 import * as u from './utils'
-console.log(u)
+const { spawnSafe } = u
 
 ;(async () => {
-  await u.spawnSafe('git', ['branch', 'gh-pages'])
-  await u.spawnSafe('git', ['worktree', 'add', 'gh-pages', 'gh-pages'])
-  await u.spawnSafe('git', ['rm', '-rf', '.'], {
+  await spawnSafe('git', ['branch', 'gh-pages'])
+  await spawnSafe('git', ['worktree', 'add', 'gh-pages', 'gh-pages'])
+  await spawnSafe('git', ['rm', '-rf', '.'], {
     cwd: 'gh-pages'
   })
-  await u.spawnSafe('touch', ['.nojekyll'], {
+  await spawnSafe('touch', ['.nojekyll'], {
     cwd: 'gh-pages'
   })
 })().catch(console.error)

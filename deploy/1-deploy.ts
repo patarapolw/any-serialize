@@ -5,7 +5,7 @@ import * as u from './utils'
 const { spawnSafe } = u
 
 ;(async () => {
-  await spawnSafe('yarn', ['build'])
+  // await spawnSafe('yarn', ['build'])
 
   await new Promise((resolve, reject) => {
     glob('lib/**/*.js', (err, matches) => {

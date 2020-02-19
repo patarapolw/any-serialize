@@ -13,7 +13,7 @@
   ],
   "scripts": {
     "build": "tsc -P src/tsconfig.json",
-    "prepack": "yarn build",
+    "prepack": "yarn build && yarn deploy",
     "test": "ts-mocha -r esm tests/**/*.spec.ts",
     "deploy": "ts-node -r esm deploy/1-deploy.ts"
   },
