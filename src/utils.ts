@@ -13,7 +13,7 @@ export interface IRegistration {
   prefix?: string
   key?: string
   toJSON?: (_this: any, parent: any) => any,
-  fromJSON?: (current: any, parent: any) => any
+  fromJSON?: ((current: any, parent: any) => any) | null
 }
 
 export function isClass (k: any): k is { prototype: { constructor: any } } {

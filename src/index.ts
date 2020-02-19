@@ -42,7 +42,8 @@ export class Serialize {
           const { source, flags } = current
           return new RegExp(source, flags)
         }
-      }
+      },
+      WriteOnlyFunctionAdapter
     )
   }
 
@@ -70,7 +71,9 @@ export class Serialize {
         item: R, prefix, key, toJSON, fromJSON
       }) => {
         // @ts-ignore
-        fromJSON = fromJSON || ((arg: any) => isClass(R) ? new R(arg) : arg)
+        fromJSON = typeof fromJSON === 'undefined'
+          ? (arg: any) => isClass(R) ? new R(arg) : arg
+          : (fromJSON || undefined)
         key = this.getKey(prefix, key || (isClass(R)
           ? R.prototype.constructor.name
           : getFunctionName(R)))
@@ -99,26 +102,15 @@ export class Serialize {
       if (['object', 'function'].includes(typeof v0)) {
         for (const { R, key, toJSON } of pThis.registrar) {
           if (compareNotFalsy(v0.constructor, (R.prototype || {}).constructor) ||
-              compareNotFalsy(pThis.getKey(v0.__prefix__, v0.__name__), key)) {
+              compareNotFalsy(pThis.getKey(v0.__prefix__, v0.__name__ || (typeof v0 === 'function'
+                ? 'Function'
+                : undefined)), key)) {
             const parent = {} as any
             parent[key] = (
-              (toJSON || (R.prototype || {}).toJSON || v0.toJSON || (() => {
-                return typeof v0 === 'function' ? functionToString(v0) : v0.toString()
-              })).bind(v0)
+              (toJSON || (R.prototype || {}).toJSON || v0.toJSON || v0.toString).bind(v0)
             )(_this[k], parent)
             return parent
           }
-        }
-
-        if (typeof v0 === 'function') {
-          const parent = {} as any
-          parent[pThis.getKey(undefined, 'function')] = (
-            (v0.toJSON || (() => {
-              return functionToString(v0)
-            })).bind(v0)
-          )(_this[k], parent)
-
-          return parent
         }
       }
 
@@ -135,16 +127,8 @@ export class Serialize {
       if (v && typeof v === 'object') {
         for (const { key, fromJSON } of this.registrar) {
           if (v[key]) {
-            return (fromJSON || ((content: any) => {
-              // eslint-disable-next-line no-new-func
-              return new Function(content)
-            }))(v[key], v)
+            return typeof fromJSON === 'function' ? fromJSON(v[key], v) : v
           }
-        }
-
-        if (v[this.getKey(undefined, 'function')]) {
-          // eslint-disable-next-line no-new-func
-          return new Function(v[this.getKey(undefined, 'function')])
         }
       }
       return v
@@ -155,6 +139,22 @@ export class Serialize {
     return (typeof prefix === 'string' ? prefix : this.prefix) + name
   }
 }
+
+export const FullFunctionAdapter: IRegistration = {
+  item: Function,
+  toJSON: (_this) => functionToString(_this.toString()),
+  fromJSON: (content: string) => {
+    // eslint-disable-next-line no-new-func
+    return new Function(content)
+  }
+}
+
+export const WriteOnlyFunctionAdapter: IRegistration = (() => {
+  return {
+    ...FullFunctionAdapter,
+    fromJSON: null
+  }
+})()
 
 export * from './mongo'
 export * from './utils'

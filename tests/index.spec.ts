@@ -1,4 +1,4 @@
-import { Serialize } from '../src'
+import { Serialize, FullFunctionAdapter } from '../src'
 
 class CustomClass1 {
   /**
@@ -29,6 +29,7 @@ class CustomClass1 {
 describe('Default functions', () => {
   const ser = new Serialize()
   ser.register(CustomClass1)
+  // ser.register(CustomClass1, FullFunctionAdapter)
 
   const r = ser.stringify({
     a: new Date(),
