@@ -3,15 +3,17 @@
   "version": "1.1.2",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
-  "unpkg": "lib/umd.js",
+  "unpkg": "umd/index.min.js",
   "author": "Pacharapol Withayasakpunt <patarapolw@gmail.com> (https://polvcode.dev)",
   "license": "MIT",
   "files": [
     "lib",
-    "src"
+    "src",
+    "umd"
   ],
   "scripts": {
     "build": "tsc -P src/tsconfig.json",
+    "build:web": "parcel build umd.ts -d umd -o index.min.js",
     "prepack": "yarn build",
     "test": "ts-mocha tests/**/*.spec.ts"
   },
