@@ -2,3 +2,5 @@
 !*.js
 !*.ts
 node_modules
+/lib/
+/gh-pages/

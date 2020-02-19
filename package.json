@@ -8,8 +8,7 @@
   "license": "MIT",
   "files": [
     "lib",
-    "src",
-    "umd"
+    "src"
   ],
   "scripts": {
     "build": "tsc -P src/tsconfig.json",
