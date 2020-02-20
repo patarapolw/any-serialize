@@ -3,6 +3,7 @@
   "version": "1.2.3",
   "type": "module",
   "main": "lib/index.js",
+  "module": "lib/index.mjs",
   "types": "lib/index.d.ts",
   "author": "Pacharapol Withayasakpunt <patarapolw@gmail.com> (https://polvcode.dev)",
   "license": "MIT",
@@ -12,9 +13,11 @@
   ],
   "scripts": {
     "build": "tsc -P src/tsconfig.json",
+    "postbuild": "find lib | renamer --find .js --replace .mjs && echo \"require=require('esm');module.exports=require('./index.mjs')\" > lib/index.js",
     "prepack": "yarn build && yarn deploy",
     "test": "ts-mocha -r esm tests/**/*.spec.ts",
-    "deploy": "ts-node -r esm deploy/1-deploy.ts"
+    "deploy": "ts-node -r esm deploy/1-deploy.ts",
+    "deploy:dev": "python -m http.server --directory gh-pages"
   },
   "devDependencies": {
     "@types/fs-extra": "^8.1.0",
@@ -29,11 +32,17 @@
     "eslint-plugin-node": ">=9.1.0",
     "eslint-plugin-promise": ">=4.2.1",
     "eslint-plugin-standard": ">=4.0.0",
-    "esm": "^3.2.25",
     "fs-extra": "^8.1.0",
     "glob": "^7.1.6",
     "mocha": "^6.0.0",
     "ts-mocha": "^6.0.0",
     "typescript": "^3.7.5"
+  },
+  "optionalDependencies": {
+    "esm": "^3.2.25"
+  },
+  "engines": {
+    "node": "12.16.1",
+    "yarn": "1.22.0"
   }
 }

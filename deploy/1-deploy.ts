@@ -8,15 +8,15 @@ const { spawnSafe } = u
   // await spawnSafe('yarn', ['build'])
 
   await new Promise((resolve, reject) => {
-    glob('lib/**/*.js', (err, matches) => {
+    glob('lib/**/*.mjs', (err, matches) => {
       if (err) {
         reject(err)
       }
 
       matches.map((m) => {
         const s = fs.readFileSync(m, 'utf8').replace(
-          /(?<start>^|\n)(?<pre>(?:im|ex)port .+)(?<bracket>['"])(?<name>.+?)(?<ext>\.[tj]?s)?(?:\k<bracket>)/g,
-          '$<start>$<pre>$<bracket>$<name>.js$<bracket>'
+          /(?<start>^|\n)(?<pre>(?:im|ex)port .+)(?<bracket>['"])(?<name>.+?)(?:\k<bracket>)/g,
+          '$<start>$<pre>$<bracket>$<name>.mjs$<bracket>'
         )
         fs.ensureFileSync(`gh-pages/${m}`)
         fs.writeFileSync(`gh-pages/${m}`, s)
@@ -31,13 +31,15 @@ const { spawnSafe } = u
   )
   fs.writeFileSync('gh-pages/index.html', s)
 
-  await spawnSafe('git', ['add', '.'], {
-    cwd: 'gh-pages'
-  })
-  await spawnSafe('git', ['commit', '-m', 'deploy'], {
-    cwd: 'gh-pages'
-  })
-  await spawnSafe('git', ['push', 'origin', 'gh-pages'], {
-    cwd: 'gh-pages'
-  })
+  if (process.env.PUSH !== '0') {
+    await spawnSafe('git', ['add', '.'], {
+      cwd: 'gh-pages'
+    })
+    await spawnSafe('git', ['commit', '-m', 'deploy'], {
+      cwd: 'gh-pages'
+    })
+    await spawnSafe('git', ['push', 'origin', 'gh-pages'], {
+      cwd: 'gh-pages'
+    })
+  }
 })().catch(console.error)

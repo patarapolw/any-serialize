@@ -1,6 +1,6 @@
 # any-serialize
 
-Serialize / Deserialize any JavaScript objects, as long as you provides how-to. I have already provided `Date`, `RegExp` and `Function`.
+Serialize / Deserialize any JavaScript objects, as long as you provides how-to. I have already provided `Date`, `RegExp`, `Set` and `Function`.
 
 [![npm version](https://badge.fury.io/js/any-serialize.svg)](https://badge.fury.io/js/any-serialize)
 

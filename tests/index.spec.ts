@@ -35,7 +35,8 @@ describe('Default functions', () => {
     a: new Date(),
     r: /^hello /gi,
     c: new CustomClass1(1, 3),
-    f: (a: number, b: number) => a + b
+    f: (a: number, b: number) => a + b,
+    s: new Set([1, 1, 'a'])
   })
 
   it('stringify', () => {

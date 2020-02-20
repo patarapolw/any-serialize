@@ -43,7 +43,13 @@ export class Serialize {
           return new RegExp(source, flags)
         }
       },
-      WriteOnlyFunctionAdapter
+      WriteOnlyFunctionAdapter,
+      {
+        item: Set,
+        toJSON (_this) {
+          return Array.from(_this)
+        }
+      }
     )
   }
 
