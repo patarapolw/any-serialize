@@ -1,6 +1,6 @@
 {
   "name": "any-serialize",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "type": "module",
   "main": "lib/index.js",
   "module": "lib/index.mjs",
@@ -12,7 +12,7 @@
     "src"
   ],
   "scripts": {
-    "build": "tsc -P src/tsconfig.json",
+    "build": "rimraf lib && tsc -P src/tsconfig.json",
     "postbuild": "find lib | renamer --find .js --replace .mjs && echo \"require=require('esm');module.exports=require('./index.mjs')\" > lib/index.js",
     "prepack": "yarn build && yarn deploy",
     "test": "ts-mocha -r esm tests/**/*.spec.ts",
@@ -35,6 +35,7 @@
     "fs-extra": "^8.1.0",
     "glob": "^7.1.6",
     "mocha": "^6.0.0",
+    "rimraf": "^3.0.2",
     "ts-mocha": "^6.0.0",
     "typescript": "^3.7.5"
   },
