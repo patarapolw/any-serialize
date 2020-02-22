@@ -129,7 +129,7 @@ export class Serialize {
   }
 
   hash (obj: any) {
-    return cyrb53(this.stringify(obj))
+    return cyrb53(this.stringify(obj)).toString(36)
   }
 
   /**
