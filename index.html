@@ -108,7 +108,14 @@ const obj = {
   r: /^hello /gi,
   f: (a, b) => a + b,
   s: new Set([1, 1, 'a']),
-  c: new XClass()
+  c: new XClass(),
+  miscell: [
+    NaN,
+    Infinity,
+    BigInt(900719925474099133333332),
+    Symbol('hello'),
+    function fnLiteral (a) { return a }
+  ]
 }
 console.log('obj =', obj)
 
