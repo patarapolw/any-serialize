@@ -66,7 +66,7 @@ const obj = {
   ]
 }
 
-escribe('Deserializable', () => {
+describe('Deserializable', () => {
   const ser0 = new Serialize()
 
   /**
