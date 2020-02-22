@@ -36,7 +36,15 @@ export function functionToString (R: Function) {
   return R.toString().replace(/^.+?\{/s, '').replace(/\}.*$/s, '').trim()
 }
 
-export function cyrb53 (str: string, seed = Math.random()) {
+/**
+ * https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
+ *
+ * https://stackoverflow.com/a/52171480/9023855
+ *
+ * @param str
+ * @param seed
+ */
+export function cyrb53 (str: string, seed = 0) {
   let h1 = 0xdeadbeef ^ seed; let h2 = 0x41c6ce57 ^ seed
   for (let i = 0, ch; i < str.length; i++) {
     ch = str.charCodeAt(i)
