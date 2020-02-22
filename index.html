@@ -69,10 +69,7 @@
 
   <script id="mocha-browser">
     var describe = (name, fn) => fn()
-    var it = (name, fn) => {
-      console.log(name)
-      fn()
-    }
+    var it = (name, fn) => fn()
     var assert = (r) => {
       if (!r) {
         throw new Error('Assertion Error')
@@ -170,9 +167,10 @@ describe('Deserializable', () => {
   const hash1 = ser0.hash(reParsedObj)
 
   it('results', () => {
-    console.log(ser0)
+    console.log('Serialize =', ser0)
     console.log(obj0, parsedObj, reParsedObj)
-    console.log(stringifiedObj, reStringifiedObj)
+    console.log('stringifiedObj', stringifiedObj)
+    console.log('reStringifiedObj', reStringifiedObj)
     console.log(hash0, hash1)
   })
 
