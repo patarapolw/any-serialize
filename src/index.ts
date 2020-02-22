@@ -152,7 +152,7 @@ export class Serialize {
    * @param obj Uses `JSON.stringify` with sorter Array by default
    */
   stringify (obj: any) {
-    const clonedObj = this.deepCloneAndFindAndReplace({ obj }).obj
+    const clonedObj = this.deepCloneAndFindAndReplace([obj])[0]
 
     const keys = new Set<string>()
     const getAndSortKeys = (a: any) => {
@@ -162,6 +162,8 @@ export class Serialize {
             keys.add(k)
             getAndSortKeys(a[k])
           }
+        } else if (Array.isArray(a)) {
+          a.map((el) => getAndSortKeys(el))
         }
       }
     }
@@ -199,10 +201,9 @@ export class Serialize {
 
     if (t.is[0] === 'Array') {
       const obj = [] as any[]
-
-      for (const k of o) {
-        obj[k] = this.deepCloneAndFindAndReplace(o[k])
-      }
+      o.map((el: any, i: number) => {
+        obj[i] = this.deepCloneAndFindAndReplace(el)
+      })
 
       return obj
     } else if (t.is[0] === 'object') {

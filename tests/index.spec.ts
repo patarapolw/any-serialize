@@ -33,16 +33,22 @@ class UndefClass {
 
 describe('Default functions', () => {
   const ser = new Serialize()
-  // ser.register(CustomClass1)
   ser.register(CustomClass1, FullFunctionAdapter)
 
   const r = ser.stringify({
     a: new Date(),
     r: /^hello /gi,
-    c: new CustomClass1(1, 3),
-    f: (a: number, b: number) => a + b,
+    f: (a: any, b: any) => a + b,
     s: new Set([1, 1, 'a']),
-    undefClass: new UndefClass()
+    c: new UndefClass(),
+    c2: new CustomClass1(4, 5),
+    miscell: [
+      NaN,
+      Infinity,
+      BigInt(900719925474099133333332),
+      Symbol('hello'),
+      function fnLiteral (a: any) { return a }
+    ]
   })
 
   it('stringify', () => {
