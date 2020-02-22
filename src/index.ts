@@ -1,6 +1,6 @@
 import {
   StringifyFunction, ParseFunction, IRegistration,
-  isClassConstructor, getFunctionName, compareNotFalsy, functionToString
+  isClassConstructor, getFunctionName, compareNotFalsy, functionToString, cyrb53
 } from './utils'
 
 export class Serialize {
@@ -108,51 +108,28 @@ export class Serialize {
 
   /**
    *
-   * @param obj Uses `JSON.stringify` by default
+   * @param obj Uses `JSON.stringify` with sorter Array by default
    */
   stringify (obj: any) {
-    const pThis = this
+    const clonedObj = this.deepCloneAndFindAndReplace(obj)
 
-    return this.stringifyFunction(obj, function (k, v, _this) {
-      // @ts-ignore
-      _this = this || _this
-      const v0 = _this ? _this[k] : v
-      if (['object', 'function'].indexOf(typeof v0) !== -1) {
-        for (const { R, key, toJSON } of pThis.registrar) {
-          if (compareNotFalsy(v0.constructor, (R.prototype || {}).constructor) ||
-              compareNotFalsy(pThis.getKey(v0.__prefix__, v0.__name__ || (typeof v0 === 'function'
-                ? 'Function'
-                : undefined)), key)) {
-            const parent = {} as any
-            parent[key] = (
-              (toJSON || (R.prototype || {}).toJSON || v0.toJSON || v0.toString).bind(v0)
-            )(_this[k], parent)
-            return parent
+    const keys = new Set<string>()
+    const getAndSortKeys = (a: any) => {
+      if (a) {
+        if (typeof a === 'object' && a.constructor.name === 'Object') {
+          for (const k of Object.keys(a)) {
+            keys.add(k)
+            getAndSortKeys(a[k])
           }
         }
       }
+    }
+    getAndSortKeys(clonedObj)
+    return this.stringifyFunction(clonedObj, Array.from(keys).sort())
+  }
 
-      if (typeof v0 === 'object' && v0.constructor && !['Object', 'Array'].includes(v0.constructor.name)) {
-        const content = {} as any
-
-        /**
-         * https://stackoverflow.com/questions/34699529/convert-javascript-class-instance-to-plain-object-preserving-methods
-         */
-        Object.getOwnPropertyNames(v0).map((prop) => {
-          const val = (v0 as any)[prop]
-          if (['constructor', 'toJSON', 'fromJSON'].includes(prop)) {
-            return
-          }
-          content[prop] = val
-        })
-
-        return {
-          [pThis.getKey(undefined, v0.constructor.name)]: content
-        }
-      }
-
-      return v
-    })
+  hash (obj: any) {
+    return cyrb53(this.stringify(obj))
   }
 
   /**
@@ -173,7 +150,88 @@ export class Serialize {
   }
 
   private getKey (prefix: any, name: any) {
-    return (typeof prefix === 'string' ? prefix : this.prefix) + name
+    return (typeof prefix === 'string' ? prefix : this.prefix) + (name || '')
+  }
+
+  private deepCloneAndFindAndReplace (o: any) {
+    if (o && typeof o === 'object') {
+      if (Array.isArray(o)) {
+        const obj = [] as any[]
+
+        for (const k of o) {
+          obj[k] = this.deepCloneAndFindAndReplace(o[k])
+        }
+
+        return obj
+      } else {
+        if (o.constructor.name === 'Object') {
+          const obj = {} as any
+
+          for (const k of Object.keys(o)) {
+            for (const { R, key, toJSON } of this.registrar) {
+              if (k === key) {
+                const p = {} as any
+                p[key] = (
+                  (toJSON || (R.prototype || {}).toJSON || o.toJSON || o.toString).bind(o)
+                )(o, p)
+
+                obj[k] = p
+                break
+              }
+            }
+
+            if (obj[k] === undefined) {
+              obj[k] = this.deepCloneAndFindAndReplace(o[k])
+            }
+          }
+
+          return obj
+        } else {
+          for (const { R, key, toJSON } of this.registrar) {
+            if (compareNotFalsy(o.constructor, (R.prototype || {}).constructor) ||
+                compareNotFalsy(this.getKey(o.__prefix__, o.__name__), key)) {
+              const p = {} as any
+              p[key] = (
+                (toJSON || (R.prototype || {}).toJSON || o.toJSON || o.toString).bind(o)
+              )(o, p)
+
+              return p
+            }
+          }
+
+          const content = {} as any
+
+          /**
+           * https://stackoverflow.com/questions/34699529/convert-javascript-class-instance-to-plain-object-preserving-methods
+           */
+          Object.getOwnPropertyNames(o).map((prop) => {
+            const val = o[prop]
+            if (['constructor', 'toJSON', 'fromJSON'].includes(prop)) {
+              return
+            }
+            content[prop] = val
+          })
+
+          return {
+            [this.getKey(undefined, o.constructor.name)]: content
+          }
+        }
+      }
+    }
+
+    if (typeof o === 'function') {
+      const k = this.getKey(undefined, 'Function')
+      const { R, key, toJSON } = this.registrar.filter(({ key }) => key === k)[0] || {}
+
+      const p = {} as any
+      p[key] = (
+        (toJSON || (R.prototype || {}).toJSON || o.toJSON || o.toString).bind(o)
+      )(o, p)
+
+      return p
+    }
+
+    return o
   }
 }
 

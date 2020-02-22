@@ -68,13 +68,3 @@ console.log(s)
 console.log(ser.stringify(s))
 // {"a":{"__Date":"2020-02-18T17:53:37.557Z"},"r":{"__RegExp":{"source":"^hello ","flags":"gi"}},"c":{"__unsafeName":{"a":1,"b":3}},"f":{"__Function":"(a, b) => a + b"}}
 ```
-
-If you to create a hash or ensure key order, you might use [json-stable-stringify](https://github.com/substack/json-stable-stringify)
-
-```ts
-const ser = new Serialize({
-  stringify(obj, replacer) {
-    return stringify(obj, { replacer })
-  }
-})
-```
