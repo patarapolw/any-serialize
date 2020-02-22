@@ -1,6 +1,8 @@
-import { Serialize, FullFunctionAdapter } from '../src/index'
+import assert from 'assert'
 
-class CustomClass1 {
+import { Serialize, FullFunctionAdapter, UndefinedAdapter } from '../src/index'
+
+class RegisteredClass {
   /**
    * You can turn off prefix with __prefix__ = ''
    */
@@ -9,7 +11,7 @@ class CustomClass1 {
 
   static fromJSON (arg: {a: number, b: number}) {
     const { a, b } = arg
-    return new CustomClass1(a, b)
+    return new RegisteredClass(a, b)
   }
 
   a: number
@@ -26,46 +28,121 @@ class CustomClass1 {
   }
 }
 
-class UndefClass {
-  x = 10
-  y = 'abc'
+class UnregisteredClass {
+  static funA () {
+    return true
+  }
+
+  static a = 1
+
+  b = 2
+
+  funB () {
+    return 'abc'
+  }
 }
 
-describe('Default functions', () => {
-  const ser = new Serialize()
-  ser.register(CustomClass1, FullFunctionAdapter)
+const obj = {
+  a: new Date(),
+  r: /^hello /gi,
+  f: (a: number, b: number) => a + b,
+  s: new Set([1, 1, 'a']),
+  registered: new RegisteredClass(2, 3),
+  miscell: [
+    NaN,
+    Infinity,
+    BigInt(900719925474099133333332),
+    function fnLiteral (a: any) { return a }
+  ]
+}
 
-  const r = ser.stringify({
-    a: new Date(),
-    r: /^hello /gi,
-    f: (a: any, b: any) => a + b,
-    s: new Set([1, 1, 'a']),
-    c: new UndefClass(),
-    c2: new CustomClass1(4, 5),
-    miscell: [
-      NaN,
-      Infinity,
-      BigInt(900719925474099133333332),
-      Symbol('hello'),
-      function fnLiteral (a: any) { return a }
-    ]
+describe('Deserializable', () => {
+  const ser0 = new Serialize()
+
+  /**
+   * If talking about cloning, it can be done without an adapter.
+   */
+  const obj0 = ser0.clone(obj)
+
+  // FullFunctionAdapter is required to deserialize Functions (because it can be unsafe).
+  ser0.register(FullFunctionAdapter, RegisteredClass)
+
+  const hash0 = ser0.hash(obj0)
+  const stringifiedObj = ser0.stringify(obj0)
+  const parsedObj = ser0.parse(stringifiedObj)
+  const reStringifiedObj = ser0.stringify(parsedObj)
+  const reParsedObj = ser0.parse(reStringifiedObj)
+  const hash1 = ser0.hash(reParsedObj)
+
+  it('stringifyObj', () => {
+    assert.equal(stringifiedObj, reStringifiedObj)
   })
 
-  it('stringify', () => {
-    console.log(r)
-    // {"a":{"__Date":"2020-02-19T07:20:23.364Z"},"r":{"__RegExp":{"source":"^hello ","flags":"gi"}},"c":{"__unsafeName":{"a":1,"b":3}},"f":{"__Function":"(a, b) => a + b"}}
+  it('parsedFunction works', () => {
+    assert.equal(reParsedObj.f(1, 2), 3)
   })
 
-  it('parse', () => {
-    const s = ser.parse(r)
-    console.log(s)
-    // { a: 2020-02-19T07:20:23.364Z,
-    //   r: /^hello /gi,
-    //   c: CustomClass1 { a: 1, b: 3 },
-    //   f: [Function] }
-    console.log(ser.stringify(s))
-    // {"a":{"__Date":"2020-02-19T07:20:23.364Z"},"r":{"__RegExp":{"source":"^hello ","flags":"gi"}},"c":{"__unsafeName":{"a":1,"b":3}},"f":{"__Function":"(a, b) => a + b"}}
-    console.log(s.f(1, 2))
-    // 3
+  it('hash is constant', () => {
+    assert.equal(hash0, hash1)
+  })
+})
+
+describe('Native Serialize', () => {
+  const ser1 = new Serialize()
+  const obj1 = ser1.clone(obj)
+  ;(obj1 as any).unregistered = new UnregisteredClass()
+
+  /**
+   * Symbol is quite special and must always be unique
+   */
+  it('Symbol is unique', () => {
+    assert.notEqual(ser1.stringify(Symbol('hello')), ser1.stringify(Symbol('hello')))
+  })
+
+  /**
+   * Deep equal is a little special in that
+   * it requires hashing for objects that isn't Arrays nor plain Objects
+   */
+  it('use Serialize#deepEqual function', () => {
+    assert(ser1.deepEqual(obj1, ser1.clone(obj1)))
+  })
+
+  /**
+   * Some reality checks
+   */
+  it('Symbol(1) not deepEqual Symbol(1)', () => {
+    assert(!ser1.deepEqual(Symbol(1), Symbol(1)))
+  })
+
+  it('NaN deepEqual NaN', () => {
+    assert(ser1.deepEqual(NaN, NaN))
+  })
+
+  /**
+   * To make NaN !== NaN, provide your own custom hash defintion for NaN
+   */
+  it('NaN can be made not deepEqual NaN', () => {
+    const ser2 = new Serialize()
+    ser2.register(
+      {
+        key: 'NaN',
+        toJSON: () => Math.random()
+      }
+    )
+    assert(!ser2.deepEqual(NaN, NaN))
+  })
+
+  it('undefined is a throwaway', () => {
+    const obj2 = ser1.clone(obj1)
+    ;(obj2.undefined) = undefined
+    assert(ser1.deepEqual(obj1, obj2))
+  })
+
+  it('Can force compare undefined', () => {
+    const ser2 = new Serialize()
+    ser2.register(UndefinedAdapter)
+    const obj2 = ser2.clone(obj1)
+    ;(obj2.undefined) = undefined
+    assert(!ser2.deepEqual(obj1, obj2))
   })
 })

@@ -1,6 +1,6 @@
 export type TypeNativeSerializable = 'string' | 'number' | 'boolean'
 export type TypeNativeNonSerializable = 'bigint' | 'symbol' | 'undefined' | 'function' | 'object'
-export type TypeExtra = 'Null' | 'Array' | 'NamedArray' | 'Named' | 'Constructor' | 'NaN' | 'Infinity'
+export type TypeExtra = 'Null' | 'Array' | 'Named' | 'Constructor' | 'NaN' | 'Infinity'
 export type TypeAll = TypeNativeSerializable | TypeNativeNonSerializable | TypeExtra
 
 export function getTypeofDetailed (a: any) {
@@ -38,15 +38,15 @@ export function getTypeofDetailed (a: any) {
       if (output.id === Object) {
         output.is = ['object']
       } else if (output.id === Array) {
+        output.is = ['Array']
         /**
-         * Or Array.isArray()
+         * Array.isArray() also includes classes that extend Array
          * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/isArray
          *
          * Given a TypedArray instance, false is always returned
          */
-        output.is = ['Array']
-      } else if (Array.isArray(a)) {
-        output.is = ['NamedArray']
+      // } else if (Array.isArray(a)) {
+      //   output.is = ['NamedArray']
       } else {
         output.is = ['Named']
       }
@@ -94,4 +94,12 @@ export function getTypeofDetailed (a: any) {
   }
 
   return output
+}
+
+export function isArray (a: any, t?: ReturnType<typeof getTypeofDetailed>): a is any[] {
+  return (t || getTypeofDetailed(a)).is[0] === 'Array'
+}
+
+export function isObject (a: any, t?: ReturnType<typeof getTypeofDetailed>): a is Record<string, any> {
+  return (t || getTypeofDetailed(a).is[0]) === 'object'
 }

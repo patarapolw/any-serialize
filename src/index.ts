@@ -2,7 +2,7 @@ import {
   StringifyFunction, ParseFunction, IRegistration,
   isClassConstructor, getFunctionName, compareNotFalsy, cyrb53, extractObjectFromClass
 } from './utils'
-import { getTypeofDetailed } from './type'
+import { getTypeofDetailed, isArray, isObject } from './type'
 
 export class Serialize {
   private registrar: {
@@ -15,6 +15,8 @@ export class Serialize {
   private prefix = '__'
   private stringifyFunction: StringifyFunction = JSON.stringify
   private parseFunction: ParseFunction = JSON.parse
+
+  private undefinedProxy = Symbol('undefined')
 
   constructor (
     /**
@@ -85,14 +87,6 @@ export class Serialize {
         key: 'NaN',
         toJSON: () => 'NaN',
         fromJSON: () => NaN
-      },
-      {
-        key: 'NamedArray',
-        toJSON: (_this) => ({
-          array: _this.map((el: any) => el),
-          class: extractObjectFromClass(_this, Object.getOwnPropertyNames(Array))
-        }),
-        fromJSON: ({ array }) => Array.from(array)
       }
     )
   }
@@ -155,7 +149,7 @@ export class Serialize {
    * @param obj Uses `JSON.stringify` with sorter Array by default
    */
   stringify (obj: any) {
-    const clonedObj = this.deepCloneAndFindAndReplace([obj])[0]
+    const clonedObj = this.deepCloneAndFindAndReplace([obj], 'jsonCompatible')[0]
 
     const keys = new Set<string>()
     const getAndSortKeys = (a: any) => {
@@ -176,6 +170,36 @@ export class Serialize {
 
   hash (obj: any) {
     return cyrb53(this.stringify(obj)).toString(36)
+  }
+
+  clone (obj: any) {
+    return this.deepCloneAndFindAndReplace([obj], 'clone')[0]
+  }
+
+  deepEqual (o1: any, o2: any): boolean {
+    const t1 = getTypeofDetailed(o1)
+    const t2 = getTypeofDetailed(o2)
+
+    if (t1.typeof_ === 'function' || t1.typeof_ === 'object') {
+      if (isArray(o1, t1)) {
+        return o1.map((el1, k) => {
+          return this.deepEqual(el1, o2[k])
+        }).every((el) => el)
+      } else if (isObject(o1, t1)) {
+        return Object.entries(o1).map(([k, el1]) => {
+          return this.deepEqual(el1, o2[k])
+        }).every((el) => el)
+      } else {
+        return this.hash(o1) === this.hash(o2)
+      }
+    } else if (t1.is[0] === 'NaN' && t2.is[0] === 'NaN') {
+      /**
+       * Cannot compare directly because of infamous `NaN !== NaN`
+       */
+      return this.hash(o1) === this.hash(o2)
+    }
+
+    return o1 === o2
   }
 
   /**
@@ -199,55 +223,74 @@ export class Serialize {
     return (typeof prefix === 'string' ? prefix : this.prefix) + (name || '')
   }
 
-  private deepCloneAndFindAndReplace (o: any) {
+  /**
+   *
+   * @param o
+   * @param type Type of findAndReplace
+   */
+  private deepCloneAndFindAndReplace (o: any, type: 'jsonCompatible' | 'clone') {
     const t = getTypeofDetailed(o)
 
     if (t.is[0] === 'Array') {
       const obj = [] as any[]
       o.map((el: any, i: number) => {
-        obj[i] = this.deepCloneAndFindAndReplace(el)
+        const v = this.deepCloneAndFindAndReplace(el, type)
+        /**
+         * `undefined` can't be ignored in serialization, and will be JSON.stringify as `null`
+         */
+        if (v === this.undefinedProxy) {
+          obj[i] = undefined
+        } else {
+          obj[i] = v
+        }
       })
 
       return obj
     } else if (t.is[0] === 'object') {
       const obj = {} as any
+      Object.entries(o).map(([k, el]) => {
+        const v = this.deepCloneAndFindAndReplace(el, type)
+        if (v === undefined) {
 
-      for (const k of Object.keys(o)) {
-        for (const { R, key, toJSON } of this.registrar) {
-          if (k === key) {
-            const p = {} as any
-            p[key] = (
-              (toJSON || (!!R && R.prototype.toJSON) || o.toJSON || o.toString).bind(o)
-            )(o, p)
-
-            obj[k] = p
-            break
-          }
+        } else if (v === this.undefinedProxy) {
+          obj[k] = undefined
+        } else {
+          obj[k] = v
         }
-
-        if (obj[k] === undefined) {
-          obj[k] = this.deepCloneAndFindAndReplace(o[k])
-        }
-      }
+      })
 
       return obj
-    } else if (t.is[0] === 'Named' || t.is[0] === 'NamedArray') {
+    } else if (t.is[0] === 'Named') {
       const k = this.getKey(o.__prefix__, o.__name__ || o.constructor.name)
 
-      for (const { R, key, toJSON } of this.registrar) {
-        if ((typeof R === 'function' ? compareNotFalsy(o.constructor, R) : false) ||
+      for (const { R, key, toJSON, fromJSON } of this.registrar) {
+        if ((!!R && compareNotFalsy(o.constructor, R)) ||
             compareNotFalsy(k, key)) {
+          if (!fromJSON && type === 'clone') {
+            continue
+          }
+
           const p = {} as any
           p[key] = (
             (toJSON || (!!R && R.prototype.toJSON) || o.toJSON || o.toString).bind(o)
           )(o, p)
 
-          return p[key] === undefined ? undefined : p
+          if (p[key] === undefined) {
+            return undefined
+          } else if (type === 'clone') {
+            return fromJSON!(p[key], p)
+          } else {
+            return p
+          }
         }
       }
 
-      return {
-        [k]: extractObjectFromClass(o)
+      if (type === 'clone') {
+        return o
+      } else {
+        return {
+          [k]: extractObjectFromClass(o)
+        }
       }
     } else if (t.is[0] === 'Constructor' || t.is[0] === 'function' || t.is[0] === 'Infinity' ||
         t.is[0] === 'bigint' || t.is[0] === 'symbol' || t.is[0] === 'NaN') {
@@ -256,16 +299,38 @@ export class Serialize {
         is = 'function'
       }
 
+      /**
+       * functions should be attempted to be deep-cloned first
+       * because functions are objects and can be attach properties
+       */
+      if (type === 'clone' && is !== 'function') {
+        return o
+      }
+
       const k = this.getKey(undefined, is)
-      const { R, toJSON } = this.registrar.filter(({ key }) => key === k)[0] || {}
+      const { R, toJSON, fromJSON } = this.registrar.filter(({ key }) => key === k)[0] || {}
+
+      if (type === 'clone' && !fromJSON) {
+        return o
+      }
 
       const p = {} as any
       p[k] = (
         (toJSON || (!!R && R.prototype.toJSON) || o.toJSON || o.toString).bind(o)
       )(o, p)
 
-      return p[k] === undefined ? undefined : p
+      if (type === 'clone') {
+        return fromJSON!(p[k], p)
+      } else if (p[k] === undefined) {
+        return undefined
+      } else {
+        return p
+      }
     } else if (t.is[0] === 'undefined') {
+      if (type === 'clone') {
+        return this.undefinedProxy
+      }
+
       const k = this.getKey(undefined, t.is[0])
       const { R, toJSON } = this.registrar.filter(({ key }) => key === k)[0] || {}
 

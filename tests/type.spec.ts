@@ -24,10 +24,9 @@ describe('Special Types', () => {
   const specialTypes: Record<TypeExtra | TypeNativeNonSerializable, any[]> = {
     Null: [null],
     NaN: [NaN],
-    Named: [new NamedClassWithMethods(), new NamedClassWithoutMethods()],
+    Named: [new NamedClassWithMethods(), new NamedClassWithoutMethods(), new NamedArray(5)],
     Infinity: [Infinity, -Infinity],
     Array: [new Array(5)],
-    NamedArray: [new NamedArray(5)],
     Constructor: [NamedClassWithMethods, NamedClassWithoutMethods, Array, NamedArray],
     bigint: [BigInt(900719925474099133333332)],
     symbol: [Symbol('hello')],
@@ -43,10 +42,11 @@ describe('Special Types', () => {
 
         it(is.join(', '), () => {
           const s0 = ser.stringify(el)
-          console.log(s0)
           const r1 = ser.parse(s0)
-          if (is[0] !== 'NamedArray') {
+          if (is[0] !== 'symbol') {
             assert.equal(s0, ser.stringify(r1))
+          } else {
+            assert.notEqual(s0, ser.stringify(r1))
           }
         })
       })

@@ -64,8 +64,24 @@
     }
   </style>
   <pre style="margin: 0;">
-      <code lang="javascript" class="language-javascript" id="viewer"></code>
-    </pre>
+    <code lang="javascript" class="language-javascript" id="viewer"></code>
+  </pre>
+
+  <script id="mocha-browser">
+    var describe = (name, fn) => fn()
+    var it = (name, fn) => {
+      console.log(name)
+      fn()
+    }
+    var assert = (r) => {
+      if (!r) {
+        throw new Error('Assertion Error')
+      }
+    }
+    assert.equal = (a, b) => assert(a === b)
+    assert.notEqual = (a, b) => assert(a !== b)
+  </script>
+
   <div id="script">
     <script type="module" async>
       /** script **/
