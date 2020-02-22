@@ -83,6 +83,20 @@
  */
 import { Serialize, FullFunctionAdapter } from './lib/index.mjs'
 
+class XClass {
+  static funA () {
+    return true
+  }
+
+  static a = 1
+
+  b = 2
+
+  funB () {
+    return 'abc'
+  }
+}
+
 const ser = new Serialize()
 
 // FullFunctionAdapter is required to deserialize Functions (because it can be unsafe).
@@ -93,7 +107,8 @@ const obj = {
   a: new Date(),
   r: /^hello /gi,
   f: (a, b) => a + b,
-  s: new Set([1, 1, 'a'])
+  s: new Set([1, 1, 'a']),
+  c: new XClass()
 }
 console.log('obj =', obj)
 
