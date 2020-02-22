@@ -83,9 +83,10 @@ describe('Deserializable', () => {
   const hash1 = ser0.hash(reParsedObj)
 
   it('results', () => {
-    console.log(ser0)
+    console.log('Serialize =', ser0)
     console.log(obj0, parsedObj, reParsedObj)
-    console.log(stringifiedObj, reStringifiedObj)
+    console.log('stringifiedObj', stringifiedObj)
+    console.log('reStringifiedObj', reStringifiedObj)
     console.log(hash0, hash1)
   })
 

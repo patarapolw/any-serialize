@@ -69,10 +69,7 @@
 
   <script id="mocha-browser">
     var describe = (name, fn) => fn()
-    var it = (name, fn) => {
-      console.log(name)
-      fn()
-    }
+    var it = (name, fn) => fn()
     var assert = (r) => {
       if (!r) {
         throw new Error('Assertion Error')
