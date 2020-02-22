@@ -168,6 +168,14 @@ describe('Deserializable', () => {
   const reParsedObj = ser0.parse(reStringifiedObj)
   const hash1 = ser0.hash(reParsedObj)
 
+  it('results', () => {
+    console.log('Serialize =', ser0)
+    console.log(obj0, parsedObj, reParsedObj)
+    console.log('stringifiedObj', stringifiedObj)
+    console.log('reStringifiedObj', reStringifiedObj)
+    console.log(hash0, hash1)
+  })
+
   it('stringifyObj', () => {
     assert.equal(stringifiedObj, reStringifiedObj)
   })
