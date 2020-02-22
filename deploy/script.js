@@ -41,6 +41,9 @@ const obj = {
 }
 console.log('obj =', obj)
 
+const hash0 = ser.stringify(obj)
+console.log('hash0 =', hash0)
+
 const stringifiedObj = ser.stringify(obj)
 console.log('stringifiedObj =', stringifiedObj)
 
@@ -54,3 +57,6 @@ const reParsedObj = ser.parse(reStringifiedObj)
 console.log('reParsedObj =', reParsedObj)
 
 console.log(reParsedObj.f(1, 2))
+
+const hash1 = ser.stringify(reParsedObj)
+console.log('hash0 =', hash1)
