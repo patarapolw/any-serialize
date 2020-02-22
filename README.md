@@ -6,6 +6,8 @@ Serialize / Deserialize any JavaScript objects, as long as you provides how-to. 
 
 This package intentionally has no dependencies, and can be used safely in browser.
 
+Can also generate hash from anything, due to ability to serialize anything to String. (See `Serialize#hash`).
+
 ## Usage
 
 See [/tests](/tests).
