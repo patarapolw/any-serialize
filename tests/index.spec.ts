@@ -48,7 +48,9 @@ const obj = {
   f: (a: number, b: number) => a + b,
   s: new Set([1, 1, 'a']),
   registered: new RegisteredClass(2, 3),
+  undefined: undefined,
   miscell: [
+    undefined,
     NaN,
     Infinity,
     BigInt(900719925474099133333332),
@@ -73,6 +75,14 @@ describe('Deserializable', () => {
   const reStringifiedObj = ser0.stringify(parsedObj)
   const reParsedObj = ser0.parse(reStringifiedObj)
   const hash1 = ser0.hash(reParsedObj)
+
+  it('results', () => {
+    console.log('Serialize =', ser0)
+    console.log(obj0, parsedObj, reParsedObj)
+    console.log('stringifiedObj', stringifiedObj)
+    console.log('reStringifiedObj', reStringifiedObj)
+    console.log(hash0, hash1)
+  })
 
   it('stringifyObj', () => {
     assert.equal(stringifiedObj, reStringifiedObj)
@@ -142,7 +152,7 @@ describe('Native Serialize', () => {
     const ser2 = new Serialize()
     ser2.register(UndefinedAdapter)
     const obj2 = ser2.clone(obj1)
-    ;(obj2.undefined) = undefined
+    ;(obj2.newKey) = undefined
     assert(!ser2.deepEqual(obj1, obj2))
   })
 })
