@@ -63,6 +63,9 @@ describe('Deserializable', () => {
 
   /**
    * If talking about cloning, it can be done without an adapter.
+   * But, for undefined, without an appropriate adapter,
+   * - Thrownaway in object
+   * - Kept in Array
    */
   const obj0 = ser0.clone(obj)
 
@@ -144,7 +147,7 @@ describe('Native Serialize', () => {
 
   it('undefined is a throwaway', () => {
     const obj2 = ser1.clone(obj1)
-    ;(obj2.undefined) = undefined
+    ;(obj2.newKey) = undefined
     assert(ser1.deepEqual(obj1, obj2))
   })
 
