@@ -42,7 +42,6 @@ const obj = {
     NaN,
     Infinity,
     BigInt(900719925474099133333332),
-    Symbol('hello'),
     function fnLiteral (a) { return a }
   ]
 }
@@ -67,3 +66,9 @@ console.log(reParsedObj.f(1, 2))
 
 const hash1 = ser.hash(reParsedObj)
 console.log('hash1 =', hash1)
+
+/**
+ * Symbol is quite special
+ */
+
+console.log('Symbol =', ser.stringify(Symbol('hello')))

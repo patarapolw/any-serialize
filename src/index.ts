@@ -72,10 +72,13 @@ export class Serialize {
       {
         key: 'symbol',
         toJSON (_this: Symbol) {
-          return _this.toString()
+          return {
+            content: _this.toString(),
+            rand: Math.random().toString(36).substr(2)
+          }
         },
-        fromJSON (current: string) {
-          return Symbol(current.replace(/^Symbol\(/i, '').replace(/\)$/, ''))
+        fromJSON ({ content }) {
+          return Symbol(content.replace(/^Symbol\(/i, '').replace(/\)$/, ''))
         }
       },
       {
