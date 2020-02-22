@@ -26,6 +26,11 @@ class CustomClass1 {
   }
 }
 
+class UndefClass {
+  x = 10
+  y = 'abc'
+}
+
 describe('Default functions', () => {
   const ser = new Serialize()
   // ser.register(CustomClass1)
@@ -36,7 +41,8 @@ describe('Default functions', () => {
     r: /^hello /gi,
     c: new CustomClass1(1, 3),
     f: (a: number, b: number) => a + b,
-    s: new Set([1, 1, 'a'])
+    s: new Set([1, 1, 'a']),
+    undefClass: new UndefClass()
   })
 
   it('stringify', () => {

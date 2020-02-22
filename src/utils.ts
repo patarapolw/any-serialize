@@ -16,8 +16,12 @@ export interface IRegistration {
   fromJSON?: ((current: any, parent: any) => any) | null
 }
 
-export function isClass (k: any): k is { prototype: { constructor: any } } {
+export function isClassConstructor (k: any): k is { prototype: { constructor: any } } {
   return !!(k.prototype && k.prototype.constructor)
+}
+
+export function isClassObject (k: any): k is { constructor: { name: string }} {
+  return !!(k.constructor && typeof k.constructor.name === 'string')
 }
 
 export function compareNotFalsy (a: any, b: any) {

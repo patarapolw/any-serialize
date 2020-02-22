@@ -1,6 +1,6 @@
 import {
   StringifyFunction, ParseFunction, IRegistration,
-  isClass, getFunctionName, compareNotFalsy, functionToString
+  isClassConstructor, getFunctionName, compareNotFalsy, functionToString
 } from './utils'
 
 export class Serialize {
@@ -78,9 +78,9 @@ export class Serialize {
       }) => {
         // @ts-ignore
         fromJSON = typeof fromJSON === 'undefined'
-          ? (arg: any) => isClass(R) ? new R(arg) : arg
+          ? (arg: any) => isClassConstructor(R) ? new R(arg) : arg
           : (fromJSON || undefined)
-        key = this.getKey(prefix, key || (isClass(R)
+        key = this.getKey(prefix, key || (isClassConstructor(R)
           ? R.prototype.constructor.name
           : getFunctionName(R)))
 
@@ -129,6 +129,25 @@ export class Serialize {
             )(_this[k], parent)
             return parent
           }
+        }
+      }
+
+      if (typeof v0 === 'object' && v0.constructor && !['Object', 'Array'].includes(v0.constructor.name)) {
+        const content = {} as any
+
+        /**
+         * https://stackoverflow.com/questions/34699529/convert-javascript-class-instance-to-plain-object-preserving-methods
+         */
+        Object.getOwnPropertyNames(v0).map((prop) => {
+          const val = (v0 as any)[prop]
+          if (['constructor', 'toJSON', 'fromJSON'].includes(prop)) {
+            return
+          }
+          content[prop] = val
+        })
+
+        return {
+          [pThis.getKey(undefined, v0.constructor.name)]: content
         }
       }
 
