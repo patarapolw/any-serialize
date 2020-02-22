@@ -1,11 +1,12 @@
 import {
   StringifyFunction, ParseFunction, IRegistration,
-  isClassConstructor, getFunctionName, compareNotFalsy, functionToString, cyrb53
+  isClassConstructor, getFunctionName, compareNotFalsy, cyrb53, extractObjectFromClass
 } from './utils'
+import { getTypeofDetailed } from './type'
 
 export class Serialize {
   private registrar: {
-    R: Function
+    R?: Function
     key: any
     toJSON?: (_this: any, parent: any) => any
     fromJSON?: (current: any, parent: any) => any
@@ -49,6 +50,46 @@ export class Serialize {
         toJSON (_this) {
           return Array.from(_this)
         }
+      },
+      {
+        key: 'Infinity',
+        toJSON (_this: number) {
+          return _this.toString()
+        },
+        fromJSON (current: string) {
+          return Number(current)
+        }
+      },
+      {
+        key: 'bigint',
+        toJSON (_this: BigInt) {
+          return _this.toString()
+        },
+        fromJSON (current: string) {
+          return BigInt(current)
+        }
+      },
+      {
+        key: 'symbol',
+        toJSON (_this: Symbol) {
+          return _this.toString()
+        },
+        fromJSON (current: string) {
+          return Symbol(current.replace(/^Symbol\(/i, '').replace(/\)$/, ''))
+        }
+      },
+      {
+        key: 'NaN',
+        toJSON: () => 'NaN',
+        fromJSON: () => NaN
+      },
+      {
+        key: 'NamedArray',
+        toJSON: (_this) => ({
+          array: _this.map((el: any) => el),
+          class: extractObjectFromClass(_this, Object.getOwnPropertyNames(Array))
+        }),
+        fromJSON: ({ array }) => Array.from(array)
       }
     )
   }
@@ -82,7 +123,7 @@ export class Serialize {
           : (fromJSON || undefined)
         key = this.getKey(prefix, key || (isClassConstructor(R)
           ? R.prototype.constructor.name
-          : getFunctionName(R)))
+          : typeof R === 'function' ? getFunctionName(R) : R))
 
         return {
           R,
@@ -98,9 +139,9 @@ export class Serialize {
     this.registrar = this.registrar.filter(({ R, key }) => {
       return !rs.some((r) => {
         if (typeof r === 'function') {
-          return r.constructor === R.constructor
+          return !!R && r.constructor === R.constructor
         } else {
-          return compareNotFalsy(r.key, key) || compareNotFalsy(r.item.constructor, R.constructor)
+          return compareNotFalsy(r.key, key) || (!!r.item && !!R && compareNotFalsy(r.item.constructor, R.constructor))
         }
       })
     })
@@ -111,7 +152,7 @@ export class Serialize {
    * @param obj Uses `JSON.stringify` with sorter Array by default
    */
   stringify (obj: any) {
-    const clonedObj = this.deepCloneAndFindAndReplace(obj)
+    const clonedObj = this.deepCloneAndFindAndReplace({ obj }).obj
 
     const keys = new Set<string>()
     const getAndSortKeys = (a: any) => {
@@ -154,81 +195,82 @@ export class Serialize {
   }
 
   private deepCloneAndFindAndReplace (o: any) {
-    if (o && typeof o === 'object') {
-      if (Array.isArray(o)) {
-        const obj = [] as any[]
+    const t = getTypeofDetailed(o)
 
-        for (const k of o) {
+    if (t.is[0] === 'Array') {
+      const obj = [] as any[]
+
+      for (const k of o) {
+        obj[k] = this.deepCloneAndFindAndReplace(o[k])
+      }
+
+      return obj
+    } else if (t.is[0] === 'object') {
+      const obj = {} as any
+
+      for (const k of Object.keys(o)) {
+        for (const { R, key, toJSON } of this.registrar) {
+          if (k === key) {
+            const p = {} as any
+            p[key] = (
+              (toJSON || (!!R && R.prototype.toJSON) || o.toJSON || o.toString).bind(o)
+            )(o, p)
+
+            obj[k] = p
+            break
+          }
+        }
+
+        if (obj[k] === undefined) {
           obj[k] = this.deepCloneAndFindAndReplace(o[k])
         }
+      }
 
-        return obj
-      } else {
-        if (o.constructor.name === 'Object') {
-          const obj = {} as any
+      return obj
+    } else if (t.is[0] === 'Named' || t.is[0] === 'NamedArray') {
+      const k = this.getKey(o.__prefix__, o.__name__ || o.constructor.name)
 
-          for (const k of Object.keys(o)) {
-            for (const { R, key, toJSON } of this.registrar) {
-              if (k === key) {
-                const p = {} as any
-                p[key] = (
-                  (toJSON || (R.prototype || {}).toJSON || o.toJSON || o.toString).bind(o)
-                )(o, p)
+      for (const { R, key, toJSON } of this.registrar) {
+        if ((typeof R === 'function' ? compareNotFalsy(o.constructor, R) : false) ||
+            compareNotFalsy(k, key)) {
+          const p = {} as any
+          p[key] = (
+            (toJSON || (!!R && R.prototype.toJSON) || o.toJSON || o.toString).bind(o)
+          )(o, p)
 
-                obj[k] = p
-                break
-              }
-            }
-
-            if (obj[k] === undefined) {
-              obj[k] = this.deepCloneAndFindAndReplace(o[k])
-            }
-          }
-
-          return obj
-        } else {
-          for (const { R, key, toJSON } of this.registrar) {
-            if (compareNotFalsy(o.constructor, (R.prototype || {}).constructor) ||
-                compareNotFalsy(this.getKey(o.__prefix__, o.__name__), key)) {
-              const p = {} as any
-              p[key] = (
-                (toJSON || (R.prototype || {}).toJSON || o.toJSON || o.toString).bind(o)
-              )(o, p)
-
-              return p
-            }
-          }
-
-          const content = {} as any
-
-          /**
-           * https://stackoverflow.com/questions/34699529/convert-javascript-class-instance-to-plain-object-preserving-methods
-           */
-          Object.getOwnPropertyNames(o).map((prop) => {
-            const val = o[prop]
-            if (['constructor', 'toJSON', 'fromJSON'].includes(prop)) {
-              return
-            }
-            content[prop] = val
-          })
-
-          return {
-            [this.getKey(undefined, o.constructor.name)]: content
-          }
+          return p[key] === undefined ? undefined : p
         }
       }
-    }
 
-    if (typeof o === 'function') {
-      const k = this.getKey(undefined, 'Function')
-      const { R, key, toJSON } = this.registrar.filter(({ key }) => key === k)[0] || {}
+      return {
+        [k]: extractObjectFromClass(o)
+      }
+    } else if (t.is[0] === 'Constructor' || t.is[0] === 'function' || t.is[0] === 'Infinity' ||
+        t.is[0] === 'bigint' || t.is[0] === 'symbol' || t.is[0] === 'NaN') {
+      let is = t.is[0]
+      if (is === 'Constructor') {
+        is = 'function'
+      }
+
+      const k = this.getKey(undefined, is)
+      const { R, toJSON } = this.registrar.filter(({ key }) => key === k)[0] || {}
 
       const p = {} as any
-      p[key] = (
-        (toJSON || (R.prototype || {}).toJSON || o.toJSON || o.toString).bind(o)
+      p[k] = (
+        (toJSON || (!!R && R.prototype.toJSON) || o.toJSON || o.toString).bind(o)
       )(o, p)
 
-      return p
+      return p[k] === undefined ? undefined : p
+    } else if (t.is[0] === 'undefined') {
+      const k = this.getKey(undefined, t.is[0])
+      const { R, toJSON } = this.registrar.filter(({ key }) => key === k)[0] || {}
+
+      const p = {} as any
+      p[k] = (
+        (toJSON || (!!R && R.prototype.toJSON) || (() => {})).bind(o)
+      )(o, p)
+
+      return p[k] === undefined ? undefined : p
     }
 
     return o
@@ -236,20 +278,24 @@ export class Serialize {
 }
 
 export const FullFunctionAdapter: IRegistration = {
-  item: Function,
-  toJSON: (_this) => functionToString(_this.toString()),
+  key: 'function',
+  toJSON: (_this) => _this.toString().trim().replace(/\[native code\]/g, ' ').replace(/[\t\n\r ]+/g, ' '),
   fromJSON: (content: string) => {
     // eslint-disable-next-line no-new-func
     return new Function(`return ${content}`)()
   }
 }
 
-export const WriteOnlyFunctionAdapter: IRegistration = (() => {
-  return {
-    ...FullFunctionAdapter,
-    fromJSON: null
-  }
-})()
+export const WriteOnlyFunctionAdapter: IRegistration = {
+  ...FullFunctionAdapter,
+  fromJSON: null
+}
+
+export const UndefinedAdapter: IRegistration = {
+  key: 'undefined',
+  toJSON: () => 'undefined',
+  fromJSON: () => undefined
+}
 
 export * from './mongo'
 export * from './utils'

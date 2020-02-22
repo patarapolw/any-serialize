@@ -9,7 +9,7 @@ export type ParseFunction = (
 ) => any
 
 export interface IRegistration {
-  item: Function | RegExpConstructor
+  item?: Function | RegExpConstructor
   prefix?: string
   key?: string
   toJSON?: (_this: any, parent: any) => any,
@@ -33,7 +33,7 @@ export function getFunctionName (R: Function) {
 }
 
 export function functionToString (R: Function) {
-  return R.toString().replace(/^.+?\{/s, '').replace(/\}.*$/s, '').trim()
+  return R.toString().replace(/^.+?\{/s, '').replace(/\}.*?$/s, '').trim().replace(/[\t\n\r ]*/g, ' ')
 }
 
 /**
@@ -54,4 +54,21 @@ export function cyrb53 (str: string, seed = 0) {
   h1 = Math.imul(h1 ^ h1 >>> 16, 2246822507) ^ Math.imul(h2 ^ h2 >>> 13, 3266489909)
   h2 = Math.imul(h2 ^ h2 >>> 16, 2246822507) ^ Math.imul(h1 ^ h1 >>> 13, 3266489909)
   return 4294967296 * (2097151 & h2) + (h1 >>> 0)
-};
+}
+
+/**
+ * https://stackoverflow.com/questions/34699529/convert-javascript-class-instance-to-plain-object-preserving-methods
+ */
+export function extractObjectFromClass (o: any, exclude: string[] = []) {
+  const content = {} as any
+
+  Object.getOwnPropertyNames(o).map((prop) => {
+    const val = o[prop]
+    if (['constructor', ...exclude].includes(prop)) {
+      return
+    }
+    content[prop] = val
+  })
+
+  return o
+}
