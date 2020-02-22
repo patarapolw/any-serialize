@@ -8,7 +8,7 @@ This package intentionally has no dependencies, and can be used safely in browse
 
 - Can also generate hash from anything, due to ability to serialize anything to String. (See `Serialize#hash`).
 - Cloning (See `Serialize#clone`)
-- Deep equality due to your definition (See `Serialize#hash`)
+- Deep equality due to your definition (See `Serialize#deepEqual`)
 
 ## Usage
 
