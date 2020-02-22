@@ -172,7 +172,7 @@ export class Serialize {
     return cyrb53(this.stringify(obj)).toString(36)
   }
 
-  clone (obj: any) {
+  clone<T> (obj: T): T {
     return this.deepCloneAndFindAndReplace([obj], 'clone')[0]
   }
 
