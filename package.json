@@ -1,7 +1,6 @@
 {
   "name": "any-serialize",
-  "version": "1.4.9",
-  "type": "module",
+  "version": "1.4.10",
   "main": "main.js",
   "module": "lib/index.mjs",
   "types": "lib/index.d.ts",
