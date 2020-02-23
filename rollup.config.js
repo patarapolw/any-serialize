@@ -1,18 +1,18 @@
 import typescript from '@rollup/plugin-typescript'
 import minify from 'rollup-plugin-babel-minify'
 
-const getConfig = (output, isMin) => {
+const getConfig = ({ output, format = 'esm', isMinify }) => {
   return {
     input: 'src/index.ts',
     output: {
       file: output,
-      format: 'esm'
+      format
     },
     plugins: [
       typescript({
         module: 'esnext'
       }),
-      ...(isMin ? [
+      ...(isMinify ? [
         minify()
       ] : [])
     ]
@@ -20,6 +20,6 @@ const getConfig = (output, isMin) => {
 }
 
 export default [
-  getConfig('lib/index.mjs'),
-  getConfig('lib/index.min.mjs', true)
+  getConfig({ output: 'lib/index.mjs' }),
+  getConfig({ output: 'lib/index.min.mjs', isMinify: true })
 ]
