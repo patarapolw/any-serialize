@@ -1,8 +1,8 @@
 {
   "name": "any-serialize",
-  "version": "1.4.6",
+  "version": "1.4.7",
   "type": "module",
-  "main": "lib/index.js",
+  "main": "index.js",
   "module": "lib/index.mjs",
   "types": "lib/index.d.ts",
   "author": "Pacharapol Withayasakpunt <patarapolw@gmail.com> (https://polvcode.dev)",
@@ -13,7 +13,7 @@
   ],
   "scripts": {
     "build": "rimraf lib && tsc -P src/tsconfig.json",
-    "postbuild": "find lib | renamer --find .js --replace .mjs && echo \"require=require('esm');module.exports=require('./index.mjs')\" > lib/index.js",
+    "postbuild": "find lib | renamer --find .js --replace .mjs",
     "prepack": "yarn build && yarn deploy",
     "test": "ts-mocha -r esm tests/**/*.spec.ts",
     "deploy": "ts-node -r esm deploy/1-deploy.ts",
