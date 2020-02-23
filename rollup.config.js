@@ -1,19 +1,22 @@
 import typescript from '@rollup/plugin-typescript'
 import minify from 'rollup-plugin-babel-minify'
 
-const getConfig = ({ output, format = 'esm', isMinify }) => {
+const getConfig = ({ output, isMinify }) => {
   return {
     input: 'src/index.ts',
     output: {
       file: output,
-      format
+      format: 'esm',
+      sourcemap: true
     },
     plugins: [
       typescript({
         module: 'esnext'
       }),
       ...(isMinify ? [
-        minify()
+        minify({
+          comments: false
+        })
       ] : [])
     ]
   }
