@@ -14,12 +14,8 @@ const { spawnSafe } = u
       }
 
       matches.map((m) => {
-        const s = fs.readFileSync(m, 'utf8').replace(
-          /(?<start>^|\n)(?<pre>(?:im|ex)port .+)(?<bracket>['"])(?<name>.+?)(?:\k<bracket>)/g,
-          '$<start>$<pre>$<bracket>$<name>.mjs$<bracket>'
-        )
         fs.ensureFileSync(`gh-pages/${m}`)
-        fs.writeFileSync(`gh-pages/${m}`, s)
+        fs.copyFileSync(m, `gh-pages/${m}`)
       })
       resolve()
     })

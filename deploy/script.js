@@ -3,7 +3,7 @@
 
 /**
  * For how to use this inside web browsers, see https://unpkg.com/
- * import { Serialize, FullFunctionAdapter } from 'https://unpkg.com/any-serialize?module'
+ * import { Serialize, FullFunctionAdapter } from 'https://unpkg.com/any-serialize'
  *
  * Or,
  * Download and unzip https://github.com/patarapolw/any-serialize/archive/gh-pages.zip
