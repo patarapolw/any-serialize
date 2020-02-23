@@ -1,8 +1,8 @@
 {
   "name": "any-serialize",
-  "version": "1.4.8",
+  "version": "1.4.9",
   "type": "module",
-  "main": "index.js",
+  "main": "main.js",
   "module": "lib/index.mjs",
   "types": "lib/index.d.ts",
   "author": "Pacharapol Withayasakpunt <patarapolw@gmail.com> (https://polvcode.dev)",
