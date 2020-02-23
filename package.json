@@ -1,6 +1,6 @@
 {
   "name": "any-serialize",
-  "version": "1.4.11",
+  "version": "1.4.12",
   "main": "lib/index.js",
   "module": "lib/index.mjs",
   "unpkg": "lib/index.min.mjs",
